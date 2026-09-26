@@ -27,6 +27,13 @@ const Media = styled(Link)`
   background: ${({ theme: t }) => t.color.springWood};
 `;
 
+/** Anchors the hover quick-add to the image only, so it never covers the
+ *  title, options, or price below. The button stays a sibling of the link
+ *  rather than inside it, since a button nested in an anchor is invalid. */
+const MediaWrap = styled.div`
+  position: relative;
+`;
+
 const Img = styled.img`
   position: absolute;
   inset: 0;
@@ -158,48 +165,50 @@ export default function ProductCard({ product, eager = false, showQuickAdd = tru
 
   return (
     <Card>
-      <Media to={`/product/${product.slug}`} aria-label={product.name}>
-        {image ? (
-          <>
-            <Primary
-              src={image.src ?? image.thumbnail}
-              alt={image.alt || product.name}
-              loading={eager ? "eager" : "lazy"}
-              decoding="async"
-              $crossfade={Boolean(second)}
-            />
-            {second ? (
-              <Secondary
-                src={second.src ?? second.thumbnail}
-                alt=""
-                loading="lazy"
+      <MediaWrap>
+        <Media to={`/product/${product.slug}`} aria-label={product.name}>
+          {image ? (
+            <>
+              <Primary
+                src={image.src ?? image.thumbnail}
+                alt={image.alt || product.name}
+                loading={eager ? "eager" : "lazy"}
                 decoding="async"
+                $crossfade={Boolean(second)}
               />
-            ) : null}
-          </>
-        ) : (
-          <NoImage>
-            <NoImageMark>Cereve</NoImageMark>
-          </NoImage>
-        )}
+              {second ? (
+                <Secondary
+                  src={second.src ?? second.thumbnail}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
+              ) : null}
+            </>
+          ) : (
+            <NoImage>
+              <NoImageMark>Cereve</NoImageMark>
+            </NoImage>
+          )}
 
-        <Flags>
-          {soldOut ? <Badge $light>Sold out</Badge> : null}
-          {!soldOut && product.on_sale ? <Badge>Sale</Badge> : null}
-        </Flags>
-      </Media>
+          <Flags>
+            {soldOut ? <Badge $light>Sold out</Badge> : null}
+            {!soldOut && product.on_sale ? <Badge>Sale</Badge> : null}
+          </Flags>
+        </Media>
 
-      {showQuickAdd && purchasable ? (
-        <QuickAdd
-          type="button"
-          $added={added}
-          onClick={quickAdd}
-          disabled={adding}
-          aria-label={`Add ${product.name} to bag`}
-        >
-          {added ? "Added" : adding ? "Adding…" : "Quick add"}
-        </QuickAdd>
-      ) : null}
+        {showQuickAdd && purchasable ? (
+          <QuickAdd
+            type="button"
+            $added={added}
+            onClick={quickAdd}
+            disabled={adding}
+            aria-label={`Add ${product.name} to bag`}
+          >
+            {added ? "Added" : adding ? "Adding…" : "Quick add"}
+          </QuickAdd>
+        ) : null}
+      </MediaWrap>
 
       <Body>
         <Title>

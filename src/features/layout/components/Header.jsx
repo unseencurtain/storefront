@@ -26,7 +26,6 @@ import {
   TopBar as TopBarGrid,
   TopBarSide,
   Burger,
-  TopBarLink,
   Wordmark,
   TopBarUtils,
   CartButton,
@@ -114,7 +113,7 @@ export default function Header({ onOpenSearch, onOpenMenu, onOpenCart }) {
 
       <NavRail onMouseLeave={scheduleClose}>
         <Container>
-          <NavRailList as="nav" aria-label="Primary">
+          <NavRailList aria-label="Primary">
             {loading
               ? Array.from({ length: 4 }, (_, index) => (
                   <NavRailItem key={index} aria-hidden="true">
@@ -237,10 +236,6 @@ function TopBar({ onOpenSearch, onOpenMenu, onOpenCart }) {
           <Burger type="button" onClick={onOpenMenu} aria-label="Open menu">
             <MenuIcon open={false} size={20} />
           </Burger>
-
-          <TopBarLink as={Link} to="/shop">
-            Shop All
-          </TopBarLink>
         </TopBarSide>
 
         <Wordmark as={Link} to="/" aria-label="Cereve, home">

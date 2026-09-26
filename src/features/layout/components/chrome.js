@@ -298,24 +298,6 @@ export const Burger = styled.button`
   }
 `;
 
-export const TopBarLink = styled.a`
-  display: none;
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: 1.4px;
-  text-transform: uppercase;
-  color: ${({ theme: t }) => t.color.cocoa};
-  transition: color ${({ theme: t }) => `${t.motion.slow} ${t.motion.ease}`};
-
-  &:hover {
-    color: ${({ theme: t }) => t.color.kabulHover};
-  }
-
-  @media (min-width: 1024px) {
-    display: inline-block;
-  }
-`;
-
 export const Wordmark = styled.a`
   justify-self: center;
   font-family: ${({ theme: t }) => t.font.serif};
@@ -371,6 +353,7 @@ export const NavRail = styled.nav`
 `;
 
 export const NavRailList = styled.ul`
+  list-style: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -386,6 +369,7 @@ export const NavRailList = styled.ul`
 
 export const NavRailItem = styled.li`
   position: relative;
+  list-style: none;
 `;
 
 export const NavRailLink = styled.button`
