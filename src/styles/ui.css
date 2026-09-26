@@ -1,0 +1,511 @@
+/* =============================================================
+   UI primitives — buttons, fields, pills, swatches, steppers
+   ============================================================= */
+
+/* ---- Buttons ----------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 14px 32px;
+  font-family: var(--f-sans);
+  font-size: var(--t-subheader-xs);
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0.075rem;
+  text-transform: uppercase;
+  text-align: center;
+  border: 1.5px solid var(--c-cocoa);
+  background: var(--c-cocoa);
+  color: var(--c-white);
+  cursor: pointer;
+  transition:
+    background-color var(--t-slow) var(--ease),
+    border-color var(--t-slow) var(--ease),
+    color var(--t-slow) var(--ease);
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--c-kabul-hover);
+  border-color: var(--c-kabul-hover);
+}
+
+.btn:disabled {
+  background: var(--c-spring-wood);
+  border-color: var(--c-spring-wood);
+  color: var(--c-grey-400);
+  cursor: not-allowed;
+}
+
+.btn--lg {
+  min-height: 60px;
+  font-size: 14px;
+}
+
+.btn--secondary {
+  background: transparent;
+  color: var(--c-cocoa);
+}
+
+.btn--secondary:hover:not(:disabled) {
+  background: var(--c-cocoa);
+  color: var(--c-white);
+}
+
+.btn--secondary:disabled {
+  background: transparent;
+  border-color: var(--c-grey-300);
+  color: var(--c-grey-300);
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn--quiet {
+  background: transparent;
+  border-color: var(--c-grey-300);
+  color: var(--c-cocoa);
+}
+
+.btn--quiet:hover:not(:disabled) {
+  background: var(--c-spring-wood);
+  border-color: var(--c-cocoa);
+}
+
+/* Small-caps text button used for "Add to bag" style links */
+.btn-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--t-subheader-xs);
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: var(--ls-subheader-xs);
+  text-transform: uppercase;
+  color: var(--c-cocoa);
+  transition: color var(--t-slow) var(--ease);
+}
+
+.btn-link:hover {
+  color: var(--c-kabul-hover);
+}
+
+.btn-link--lg {
+  font-size: var(--t-subheader-sm);
+  letter-spacing: 1.4px;
+  gap: 6px;
+}
+
+.btn-link svg {
+  transition: transform var(--t-fast) var(--ease);
+}
+
+.btn-link:hover svg {
+  transform: translateX(3px);
+}
+
+/* ---- Icon button ------------------------------------------- */
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  color: var(--c-cocoa);
+  transition: background-color var(--t-fast) var(--ease);
+}
+
+.icon-btn:hover {
+  background: var(--c-spring-wood);
+  border-radius: 50%;
+}
+
+/* ---- Text fields ------------------------------------------- */
+
+.field {
+  display: block;
+  position: relative;
+}
+
+.field__label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: var(--t-body-xs);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--c-cocoa);
+}
+
+.field__label .req {
+  color: var(--c-rust);
+}
+
+.field__input,
+.field__select,
+.field__textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 14px 2px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--c-cocoa);
+  border-radius: 0;
+  color: var(--c-cocoa);
+  font-size: var(--t-body-md);
+  line-height: 1.5;
+  letter-spacing: var(--ls-body-md);
+  transition: border-color var(--t-fast) var(--ease);
+}
+
+.field__textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.field__input::placeholder,
+.field__textarea::placeholder {
+  color: var(--c-grey-400);
+}
+
+.field__input:focus,
+.field__select:focus,
+.field__textarea:focus {
+  outline: none;
+  border-bottom-color: var(--c-cocoa);
+  border-bottom-width: 2px;
+  padding-bottom: 13px;
+}
+
+.field__select {
+  appearance: none;
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--c-cocoa) 50%),
+    linear-gradient(135deg, var(--c-cocoa) 50%, transparent 50%);
+  background-position:
+    calc(100% - 11px) calc(50% - 1px),
+    calc(100% - 6px) calc(50% - 1px);
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 28px;
+}
+
+.field--invalid .field__input,
+.field--invalid .field__select,
+.field--invalid .field__textarea {
+  border-bottom-color: var(--c-rust);
+}
+
+.field__error {
+  margin-top: 6px;
+  font-size: 14px;
+  line-height: 1.28;
+  color: var(--c-rust);
+}
+
+.field__hint {
+  margin-top: 6px;
+  font-size: var(--t-body-xs);
+  color: var(--c-sonic-silver);
+}
+
+.field-row {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 640px) {
+  .field-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---- Option pills (tone / size) ---------------------------- */
+
+.pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 80px;
+  padding: 8px 16px;
+  font-size: var(--t-subheader-xs);
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: var(--ls-subheader-xs);
+  text-transform: uppercase;
+  text-align: center;
+  background: transparent;
+  color: var(--c-cocoa);
+  border: 1px solid var(--c-grey-300);
+  cursor: pointer;
+  transition:
+    color var(--t-fast) var(--ease),
+    background-color var(--t-fast) var(--ease),
+    border-color var(--t-fast) var(--ease);
+}
+
+.pill:hover:not(:disabled) {
+  border-color: var(--c-cocoa);
+}
+
+.pill[aria-checked="true"],
+.pill.is-selected {
+  border-color: var(--c-cocoa);
+  background: var(--c-cocoa);
+  color: var(--c-white);
+}
+
+.pill:disabled {
+  color: var(--c-grey-300);
+  border-color: var(--c-grey-300);
+  cursor: not-allowed;
+}
+
+.pill--out::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom right,
+    transparent calc(50% - 1px),
+    var(--c-grey-300) 50%,
+    transparent calc(50% + 1px)
+  );
+  pointer-events: none;
+}
+
+/* ---- Colour swatches --------------------------------------- */
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.swatch {
+  padding: 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  background: var(--swatch-color, var(--c-grey-200));
+}
+
+.swatch__dot {
+  display: block;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1.5px transparent;
+  transition: box-shadow var(--t-fast) var(--ease);
+}
+
+.swatch:hover .swatch__dot,
+.swatch[aria-checked="true"] .swatch__dot {
+  box-shadow: 0 0 0 1.5px var(--c-cocoa);
+}
+
+.swatch[aria-checked="true"] .swatch__dot {
+  box-shadow:
+    0 0 0 1.5px var(--c-cocoa),
+    0 0 0 4px var(--c-white),
+    0 0 0 5.5px var(--c-cocoa);
+}
+
+/* ---- Quantity stepper -------------------------------------- */
+
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 140px;
+}
+
+.stepper__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--c-grey-300);
+  color: var(--c-cocoa);
+  transition: background-color var(--t-fast) var(--ease);
+}
+
+.stepper__btn:hover:not(:disabled) {
+  background: var(--c-grey-400);
+}
+
+.stepper__btn:disabled {
+  background: var(--c-grey-100);
+  color: var(--c-grey-400);
+  cursor: not-allowed;
+}
+
+.stepper__value {
+  flex: 1 1 auto;
+  text-align: center;
+  font-size: var(--t-body-md);
+  letter-spacing: var(--ls-body-md);
+  color: var(--c-cocoa);
+}
+
+.stepper__btn--sm {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+}
+
+/* ---- Badges / tags ----------------------------------------- */
+
+.badge {
+  display: inline-block;
+  padding: 6px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--c-cocoa);
+  color: var(--c-white);
+}
+
+.badge--light {
+  background: var(--c-dawn-pink);
+  color: var(--c-cocoa);
+}
+
+.tag {
+  display: inline-block;
+  padding: 4px 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  text-transform: uppercase;
+  color: var(--c-cocoa);
+  background: transparent;
+  border: 1px solid var(--c-grey-300);
+  cursor: pointer;
+  transition:
+    background-color var(--t-fast) var(--ease),
+    border-color var(--t-fast) var(--ease),
+    color var(--t-fast) var(--ease);
+}
+
+.tag:hover,
+.tag.is-active {
+  background: var(--c-cocoa);
+  border-color: var(--c-cocoa);
+  color: var(--c-white);
+}
+
+.tag mark {
+  background: none;
+  color: inherit;
+  font-weight: 600;
+}
+
+/* ---- Accordion --------------------------------------------- */
+
+.acc {
+  border-top: 1px solid var(--c-grey-300);
+}
+
+.acc__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 20px 0;
+  font-size: var(--t-subheader-sm);
+  font-weight: 500;
+  letter-spacing: var(--ls-subheader-sm);
+  text-transform: uppercase;
+  color: var(--c-cocoa);
+  text-align: left;
+}
+
+.acc__icon {
+  position: relative;
+  flex: 0 0 15px;
+  width: 15px;
+  height: 15px;
+  color: var(--c-cocoa);
+}
+
+.acc__icon::before,
+.acc__icon::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 1px;
+  background: currentColor;
+  transform: translate(-50%, -50%);
+}
+
+.acc__icon::after {
+  transition: transform 250ms var(--ease);
+}
+
+.acc__trigger[aria-expanded="true"] .acc__icon::after {
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.acc__panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 250ms var(--ease);
+}
+
+.acc__panel[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+
+.acc__panel > div {
+  overflow: hidden;
+}
+
+.acc__content {
+  padding-bottom: 24px;
+  color: var(--c-kabul);
+  font-size: var(--t-body-sm);
+  line-height: 1.7;
+}
+
+.acc__content a.link-underline:hover {
+  color: var(--c-kabul-hover);
+}
+
+/* ---- Assurance banner (Afterpay-style strip) --------------- */
+
+.assurance {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 27px;
+  overflow: hidden;
+  background: var(--c-cart-banner);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--c-cocoa);
+  white-space: nowrap;
+}
+
+.assurance span + span::before {
+  content: "•";
+  margin-right: 8px;
+  color: var(--c-sonic-silver);
+}

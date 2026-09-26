@@ -1,0 +1,94 @@
+/* =============================================================
+   Design tokens — palette, type scale, spacing, motion.
+   Warm neutral "cosmetics" system: cocoa ink on paper-white,
+   with a rose-clay footer and a timber-grey announcement bar.
+   ============================================================= */
+
+:root {
+  /* ---- Colour ---- */
+  --c-cocoa: #271f1f; /* primary ink, primary button fill */
+  --c-kabul: #5e5047; /* body copy */
+  --c-kabul-hover: #756e65; /* hover ink */
+  --c-dawn-pink: #efe6e1; /* footer background */
+  --c-spring-wood: #f7f4f0; /* mission panel, icon hover, disabled fill */
+  --c-stone: #fbf9f7; /* page wash */
+  --c-sonic-silver: #757575; /* secondary copy, accordion headers */
+  --c-cavernous: #525252; /* tertiary copy, input underlines */
+  --c-rust: #a2605a; /* error text, announcement bar */
+  --c-announcement: #a2605b;
+
+  --c-white: #ffffff;
+  --c-grey-100: #f7f4f0;
+  --c-grey-200: #ece7e1;
+  --c-grey-300: #d6d0c7; /* borders, disabled ink */
+  --c-grey-400: #b0a9a0;
+  --c-grey-lightish: #dddddd; /* cart line dividers */
+  --c-cart-banner: #faf8f6;
+
+  --c-backdrop-soft: rgba(239, 230, 225, 0.49); /* modal scrim */
+  --c-backdrop-light: rgba(255, 255, 255, 0.8); /* cart drawer scrim */
+  --c-shadow-panel: 0 10px 20px rgba(0, 0, 0, 0.15);
+  --c-shadow-panel-soft: 0 10px 20px rgba(0, 0, 0, 0.15);
+  --c-shadow-float: 0 12px 16px -4px rgba(0, 0, 0, 0.16),
+    0 4px 6px -2px rgba(0, 0, 0, 0.04);
+  --c-focus: #756e65;
+
+  /* ---- Type ---- */
+  --f-sans: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --f-serif: "Cormorant Garamond", "Times New Roman", Times, serif;
+
+  --t-header-sm: 32px;
+  --t-header-md: 40px;
+  --t-header-lg: 60px;
+  --t-header-xl: 80px;
+  --t-subheader-xs: 12px;
+  --t-subheader-sm: 14px;
+  --t-subheader-md: 16px;
+  --t-subheader-lg: 18px;
+  --t-lead-lg: 20px;
+  --t-lead-md: 16px;
+  --t-lead-sm: 14px;
+  --t-body-lg: 20px;
+  --t-body-md: 16px;
+  --t-body-sm: 14px;
+  --t-body-xs: 12px;
+  --t-text-xs: 12px;
+
+  --ls-header-sm: -1.28px;
+  --ls-header-md: -1.6px;
+  --ls-header-lg: -2.56px;
+  --ls-header-xl: -3.2px;
+  --ls-subheader-xs: 1.2px;
+  --ls-subheader-sm: 1.4px;
+  --ls-subheader-md: 1.6px;
+  --ls-subheader-lg: 1.8px;
+  --ls-lead-lg: -0.4px;
+  --ls-lead-md: -0.32px;
+  --ls-lead-sm: -0.28px;
+  --ls-body-lg: -0.4px;
+  --ls-body-md: -0.32px;
+  --ls-body-sm: -0.28px;
+  --ls-body-xs: -0.24px;
+
+  /* ---- Layout ---- */
+  --container: 1400px;
+  --container-inset: 930px; /* cart / account */
+  --container-narrow: 676px;
+  --header-h: 60px;
+  --gutter: 16px;
+  --gutter-lg: 32px;
+
+  /* ---- Motion ---- */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.62, 0.05, 0.24, 1);
+  --t-fast: 150ms;
+  --t-base: 300ms;
+  --t-slow: 400ms;
+  --t-drawer: 600ms;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --gutter: 32px;
+  }
+}
