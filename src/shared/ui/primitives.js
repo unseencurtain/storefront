@@ -65,13 +65,15 @@ const Sub = styled.p`
   color: ${({ $muted, theme: t }) => ($muted ? t.color.sonicSilver : "inherit")};
 `;
 
-export const SubXs = styled(Sub)`
-  ${({ $size = "subheaderSm" }) => ($size === "subheaderSm" ? ramp("subheaderXs") : ramp($size))};
+/** Each step pins its own size so `<SubMd />` cannot silently inherit Sub's 14px. */
+const subStep = (size) => styled(Sub)`
+  ${ramp(size)};
 `;
 
+export const SubXs = subStep("subheaderXs");
 export const SubSm = Sub;
-export const SubMd = styled(Sub)``;
-export const SubLg = styled(Sub)``;
+export const SubMd = subStep("subheaderMd");
+export const SubLg = subStep("subheaderLg");
 
 const Body = styled.p`
   ${ramp("bodySm")};

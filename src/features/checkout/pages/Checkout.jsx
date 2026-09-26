@@ -5,6 +5,19 @@ import { useAccount } from "../../account/AccountContext.jsx";
 import { money } from "../../../shared/lib/format.js";
 import { describeGateways } from "../../../shared/lib/gateways.js";
 import { ArrowIcon, CheckIcon, BagIcon } from "../../../shared/ui/Icons.jsx";
+import {
+  BodyMd, BodySm, BodyXs, H1, H2, LeadMd, LeadSm, SubSm, SubXs
+} from "../../../shared/ui/primitives.js";
+import {
+  AppliedCode, AppliedDetail, AppliedList, AppliedRemove, Assurance, Button,
+  CheckoutGrid, CheckoutMain, CheckoutNav, CheckoutPage, CheckoutTop,
+  CheckLabel, Confirmation, ConfirmationList, ContactSummary, EmptyState, ErrorBanner,
+  Field, FieldError, FieldLabel, FieldRow, Input, InlineLink, Legal, Ledger,
+  LedgerMuted, LedgerRow, Option, OptionBody, OptionDot, OptionList, OptionPrice,
+  Panel, PanelHead, PromoForm, PromoInput, StepButton, StepDot, StepItem, Steps,
+  Select, Summary, SummaryAside, SummaryItem, SummaryItems, SummaryNames,
+  SummaryPrice, SummaryQty, SummaryThumb, TextLink, Textarea, Title, WordmarkSmall
+} from "../checkout.css.js";
 
 const STATES_US = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD",
@@ -217,93 +230,89 @@ export default function Checkout() {
     window.scrollTo({ top: 0 });
   }
 
-  if (placed) return <Confirmation receipt={placed} />;
+  if (placed) return <OrderConfirmation receipt={placed} />;
 
   if (isEmpty) {
     return (
-      <main className="page container-inset">
-        <div className="state-msg">
-          <BagIcon size={28} />
-          <h1 className="hdr-md">Your bag is empty</h1>
-          <p className="body-sm muted">Add something to your bag before checking out.</p>
-          <Link to="/shop" className="btn">
-            Shop All
-          </Link>
-        </div>
-      </main>
+      <EmptyState as="main">
+        <BagIcon size={28} />
+        <H2>Your bag is empty</H2>
+        <BodySm $muted>Add something to your bag before checking out.</BodySm>
+        <Button as={Link} to="/shop">
+          Shop All
+        </Button>
+      </EmptyState>
     );
   }
 
   return (
-    <main className="page checkout">
-      <div className="container checkout__inner">
-        <div className="checkout__main">
-          <div className="checkout__top">
-            <Link to="/" className="wordmark wordmark--sm" aria-label="Cereve, home">
+    <CheckoutPage>
+      <CheckoutGrid>
+        <CheckoutMain>
+          <CheckoutTop>
+            <WordmarkSmall as={Link} to="/" aria-label="Cereve, home">
               CEREVE
-            </Link>
+            </WordmarkSmall>
 
-            <Link to="/cart" className="btn-link">
+            <TextLink as={Link} to="/cart">
               Back to bag
-            </Link>
-          </div>
+            </TextLink>
+          </CheckoutTop>
 
-          <div className="checkout__titlewrap">
-            <h1 className="checkout__title sub-md">Checkout</h1>
-            <p className="body-xs muted checkout__session">
+          <div>
+            <Title>Checkout</Title>
+            <BodyXs $muted $session>
               {isLoggedIn ? (
                 <>
                   Checking out as{" "}
-                  <Link to="/account" className="link-underline">
+                  <InlineLink as={Link} to="/account">
                     {customer.email}
-                  </Link>
+                  </InlineLink>
                 </>
               ) : (
                 <>
                   Checking out as a guest.{" "}
-                  <Link to="/login" className="link-underline" state={{ from: "/checkout" }}>
+                  <InlineLink as={Link} to="/login" state={{ from: "/checkout" }}>
                     Sign in
-                  </Link>{" "}
+                  </InlineLink>{" "}
                   for faster checkout.
                 </>
               )}
-            </p>
+            </BodyXs>
           </div>
 
-          <ol className="steps" aria-label="Checkout progress">
-            {STEPS.map((label, index) => (
-              <li
-                key={label}
-                className="steps__item"
-                data-state={index < step ? "done" : index === step ? "current" : "todo"}
-              >
-                <button
-                  type="button"
-                  className="steps__btn"
-                  onClick={() => index < step && setStep(index)}
-                  disabled={index > step}
-                >
-                  <span className="steps__dot">
-                    {index < step ? <CheckIcon size={11} /> : index + 1}
-                  </span>
-                  {label}
-                </button>
-              </li>
-            ))}
-          </ol>
+          <Steps aria-label="Checkout progress">
+            {STEPS.map((label, index) => {
+              const state = index < step ? "done" : index === step ? "current" : "todo";
+
+              return (
+                <StepItem key={label}>
+                  <StepButton
+                    type="button"
+                    $state={state}
+                    onClick={() => index < step && setStep(index)}
+                    disabled={index > step}
+                  >
+                    <StepDot $state={state}>
+                      {index < step ? <CheckIcon size={11} /> : index + 1}
+                    </StepDot>
+                    {label}
+                  </StepButton>
+                </StepItem>
+              );
+            })}
+          </Steps>
 
           {error ? (
-            <p className="checkout__error" role="alert">
-              {error}
-            </p>
+            <ErrorBanner role="alert">{error}</ErrorBanner>
           ) : null}
 
           <form onSubmit={submit} noValidate>
             {/* ---- Information ---- */}
-            <section className="checkout__panel" data-active={step === 0} hidden={step !== 0}>
-              <h2 className="sub-sm checkout__panelhead">Contact</h2>
+            <Panel hidden={step !== 0}>
+              <PanelHead>Contact</PanelHead>
 
-              <Field
+              <CheckoutField
                 name="email"
                 label="Email"
                 type="email"
@@ -314,15 +323,15 @@ export default function Checkout() {
                 required
               />
 
-              <label className="check">
+              <CheckLabel>
                 <input type="checkbox" />
                 <span>Email me with news and offers</span>
-              </label>
+              </CheckLabel>
 
-              <h2 className="sub-sm checkout__panelhead">Shipping address</h2>
+              <PanelHead>Shipping address</PanelHead>
 
-              <div className="field-row">
-                <Field
+              <FieldRow>
+                <CheckoutField
                   name="first_name"
                   label="First name"
                   value={address.first_name}
@@ -331,7 +340,7 @@ export default function Checkout() {
                   autoComplete="given-name"
                   required
                 />
-                <Field
+                <CheckoutField
                   name="last_name"
                   label="Last name"
                   value={address.last_name}
@@ -340,9 +349,9 @@ export default function Checkout() {
                   autoComplete="family-name"
                   required
                 />
-              </div>
+              </FieldRow>
 
-              <Field
+              <CheckoutField
                 name="company"
                 label="Company (optional)"
                 value={address.company}
@@ -350,7 +359,7 @@ export default function Checkout() {
                 autoComplete="organization"
               />
 
-              <Field
+              <CheckoutField
                 name="address_1"
                 label="Address"
                 value={address.address_1}
@@ -360,7 +369,7 @@ export default function Checkout() {
                 required
               />
 
-              <Field
+              <CheckoutField
                 name="address_2"
                 label="Apartment, suite, etc. (optional)"
                 value={address.address_2}
@@ -368,8 +377,8 @@ export default function Checkout() {
                 autoComplete="address-line2"
               />
 
-              <div className="field-row">
-                <Field
+              <FieldRow>
+                <CheckoutField
                   name="city"
                   label="City"
                   value={address.city}
@@ -378,7 +387,7 @@ export default function Checkout() {
                   autoComplete="address-level2"
                   required
                 />
-                <Field
+                <CheckoutField
                   name="postcode"
                   label="ZIP / Postal code"
                   value={address.postcode}
@@ -387,10 +396,10 @@ export default function Checkout() {
                   autoComplete="postal-code"
                   required
                 />
-              </div>
+              </FieldRow>
 
-              <div className="field-row">
-                <Field
+              <FieldRow>
+                <CheckoutField
                   name="country"
                   label="Country / Region"
                   select
@@ -401,7 +410,7 @@ export default function Checkout() {
                 />
 
                 {states.length ? (
-                  <Field
+                  <CheckoutField
                     name="state"
                     label="State"
                     select
@@ -411,9 +420,9 @@ export default function Checkout() {
                     required
                   />
                 ) : null}
-              </div>
+              </FieldRow>
 
-              <Field
+              <CheckoutField
                 name="phone"
                 label="Phone (optional)"
                 type="tel"
@@ -422,27 +431,27 @@ export default function Checkout() {
                 autoComplete="tel"
               />
 
-              <button type="button" className="btn btn--lg btn--block" onClick={goToShipping} disabled={pending}>
+              <Button $block onClick={goToShipping} disabled={pending}>
                 {pending ? "Saving…" : "Continue to shipping"}
                 <ArrowIcon />
-              </button>
-            </section>
+              </Button>
+            </Panel>
 
             {/* ---- Shipping ---- */}
-            <section className="checkout__panel" hidden={step !== 1}>
-              <h2 className="sub-sm checkout__panelhead">Shipping method</h2>
+            <Panel hidden={step !== 1}>
+              <PanelHead>Shipping method</PanelHead>
 
-              <ContactSummary address={address} onEdit={() => setStep(0)} />
+              <ContactCard address={address} onEdit={() => setStep(0)} />
 
               {rates.length ? (
-                <ul className="rates">
+                <OptionList>
                   {rates.map((rate) => {
                     const value = `${rate.package_id}:${rate.rate_id}`;
                     const on = selectedRate === value;
 
                     return (
                       <li key={value}>
-                        <label className="rate" data-active={on || undefined}>
+                        <Option $active={on}>
                           <input
                             type="radio"
                             name="rate"
@@ -451,54 +460,54 @@ export default function Checkout() {
                             onChange={() => setRateKey(value)}
                           />
 
-                          <span className="rate__dot" aria-hidden="true" />
+                          <OptionDot $active={on} aria-hidden="true" />
 
-                          <span className="rate__body">
-                            <span className="sub-xs">{rate.name}</span>
+                          <OptionBody>
+                            <SubXs>{rate.name}</SubXs>
                             {rate.meta?.length ? (
-                              <span className="body-xs muted">
+                              <BodyXs $muted>
                                 {rate.meta.map((entry) => entry.value).join(" · ")}
-                              </span>
+                              </BodyXs>
                             ) : null}
-                          </span>
+                          </OptionBody>
 
-                          <span className="rate__price lead-sm">
+                          <OptionPrice>
                             {Number(rate.price) === 0 ? "Free" : money(rate.price, rate)}
-                          </span>
-                        </label>
+                          </OptionPrice>
+                        </Option>
                       </li>
                     );
                   })}
-                </ul>
+                </OptionList>
               ) : (
-                <p className="body-sm muted">No shipping options are available for this address.</p>
+                <BodySm $muted>No shipping options are available for this address.</BodySm>
               )}
 
-              <div className="checkout__nav">
-                <button type="button" className="btn btn--quiet" onClick={() => setStep(0)}>
+              <CheckoutNav>
+                <Button $quiet onClick={() => setStep(0)}>
                   Back
-                </button>
-                <button type="button" className="btn btn--lg" onClick={goToPayment} disabled={pending || !rates.length}>
+                </Button>
+                <Button onClick={goToPayment} disabled={pending || !rates.length}>
                   Continue to payment
                   <ArrowIcon />
-                </button>
-              </div>
-            </section>
+                </Button>
+              </CheckoutNav>
+            </Panel>
 
             {/* ---- Payment ---- */}
-            <section className="checkout__panel" hidden={step !== 2}>
-              <h2 className="sub-sm checkout__panelhead">Payment</h2>
+            <Panel hidden={step !== 2}>
+              <PanelHead>Payment</PanelHead>
 
-              <ContactSummary address={address} onEdit={() => setStep(0)} />
+              <ContactCard address={address} onEdit={() => setStep(0)} />
 
               {gateways.length ? (
-                <ul className="rates">
+                <OptionList>
                   {gateways.map((option) => {
                     const on = selectedPayment === option.id;
 
                     return (
                       <li key={option.id}>
-                        <label className="rate" data-active={on || undefined}>
+                        <Option $active={on}>
                           <input
                             type="radio"
                             name="payment"
@@ -506,21 +515,21 @@ export default function Checkout() {
                             checked={on}
                             onChange={() => setPayment(option.id)}
                           />
-                          <span className="rate__dot" aria-hidden="true" />
-                          <span className="rate__body">
-                            <span className="sub-xs">{option.name}</span>
-                            <span className="body-xs muted">{option.description}</span>
-                          </span>
-                        </label>
+                          <OptionDot $active={on} aria-hidden="true" />
+                          <OptionBody>
+                            <SubXs>{option.name}</SubXs>
+                            <BodyXs $muted>{option.description}</BodyXs>
+                          </OptionBody>
+                        </Option>
                       </li>
                     );
                   })}
-                </ul>
+                </OptionList>
               ) : (
-                <p className="body-sm muted">No payment method is enabled on this store.</p>
+                <BodySm $muted>No payment method is enabled on this store.</BodySm>
               )}
 
-              <Field
+              <CheckoutField
                 name="note"
                 label="Order notes (optional)"
                 textarea
@@ -529,34 +538,34 @@ export default function Checkout() {
                 placeholder="Delivery instructions, gift note…"
               />
 
-              <div className="checkout__nav">
-                <button type="button" className="btn btn--quiet" onClick={() => setStep(1)}>
+              <CheckoutNav>
+                <Button $quiet onClick={() => setStep(1)}>
                   Back
-                </button>
-                <button type="submit" className="btn btn--lg" disabled={pending || !selectedPayment}>
+                </Button>
+                <Button type="submit" disabled={pending || !selectedPayment}>
                   {pending ? "Placing order…" : "Place order"}
                   <ArrowIcon />
-                </button>
-              </div>
-            </section>
+                </Button>
+              </CheckoutNav>
+            </Panel>
           </form>
 
-          <p className="checkout__legal body-xs muted">
+          <Legal>
             By placing this order you agree to our{" "}
-            <Link to="/about" className="link-underline">
+            <InlineLink as={Link} to="/about">
               Terms
-            </Link>{" "}
+            </InlineLink>{" "}
             and{" "}
-            <Link to="/about" className="link-underline">
+            <InlineLink as={Link} to="/about">
               Privacy Policy
-            </Link>
+            </InlineLink>
             .
-          </p>
-        </div>
+          </Legal>
+        </CheckoutMain>
 
         {/* ---- Order summary ---- */}
-        <aside className="checkout__summary" aria-label="Order summary">
-          <Summary
+        <SummaryAside aria-label="Order summary">
+          <SummaryRail
             cart={cart}
             promo={promo}
             onPromo={setPromo}
@@ -564,9 +573,9 @@ export default function Checkout() {
             onRemoveCoupon={removeCoupon}
             promoBusy={promoBusy || busy.has("coupon")}
           />
-        </aside>
-      </div>
-    </main>
+        </SummaryAside>
+      </CheckoutGrid>
+    </CheckoutPage>
   );
 }
 
@@ -574,7 +583,7 @@ export default function Checkout() {
  * Summary rail
  * ------------------------------------------------------------------ */
 
-function Summary({ cart, promo, onPromo, onApplyPromo, onRemoveCoupon, promoBusy }) {
+function SummaryRail({ cart, promo, onPromo, onApplyPromo, onRemoveCoupon, promoBusy }) {
   const totals = cart.totals ?? {};
   const subtotal = Number(totals.total_items ?? 0);
   const shipping = totals.total_shipping == null ? null : Number(totals.total_shipping);
@@ -582,116 +591,112 @@ function Summary({ cart, promo, onPromo, onApplyPromo, onRemoveCoupon, promoBusy
   const coupons = cart.coupons ?? [];
 
   return (
-    <div className="summary">
-      <h2 className="sub-sm">Order summary</h2>
+    <Summary>
+      <SubSm>Order summary</SubSm>
 
-      <ul className="summary__items">
+      <SummaryItems>
         {cart.items.map((item) => (
-          <li key={item.key} className="summary__item">
-            <span className="summary__thumb">
+          <SummaryItem key={item.key}>
+            <SummaryThumb>
               {item.images?.[0] ? (
                 <img src={item.images[0].thumbnail ?? item.images[0].src} alt="" loading="lazy" />
               ) : null}
-              <span className="summary__qty">{item.quantity}</span>
-            </span>
+              <SummaryQty>{item.quantity}</SummaryQty>
+            </SummaryThumb>
 
-            <span className="summary__names">
-              <span className="body-sm">{item.name}</span>
+            <SummaryNames>
+              <BodySm>{item.name}</BodySm>
               {item.variation?.length ? (
-                <span className="body-xs muted">
+                <BodyXs $muted>
                   {item.variation.map((variation) => variation.value).join(", ")}
-                </span>
+                </BodyXs>
               ) : null}
-            </span>
+            </SummaryNames>
 
-            <span className="body-sm summary__price">
-              {money(item.totals?.line_total, item.totals)}
-            </span>
-          </li>
+            <SummaryPrice>{money(item.totals?.line_total, item.totals)}</SummaryPrice>
+          </SummaryItem>
         ))}
-      </ul>
+      </SummaryItems>
 
-      <form className="promo__form" onSubmit={onApplyPromo}>
-        <input
-          className="promo__input"
+      <PromoForm onSubmit={onApplyPromo}>
+        <PromoInput
           type="text"
           value={promo}
           onChange={(event) => onPromo(event.target.value)}
           placeholder="Discount code or gift card"
           aria-label="Discount code"
         />
-        <button type="submit" className="btn" disabled={promoBusy || !promo.trim()}>
+        <Button type="submit" disabled={promoBusy || !promo.trim()}>
           {promoBusy ? "Applying…" : "Apply"}
-        </button>
-      </form>
+        </Button>
+      </PromoForm>
 
       {coupons.length ? (
-        <ul className="promo__applied">
+        <AppliedList>
           {coupons.map((coupon) => (
             <li key={coupon.code}>
-              <span className="promo__code">{coupon.code}</span>
-              <span className="body-xs muted">{describeCoupon(coupon)}</span>
-              <button
+              <AppliedCode>{coupon.code}</AppliedCode>
+              <AppliedDetail>{describeCoupon(coupon)}</AppliedDetail>
+              <AppliedRemove
                 type="button"
-                className="promo__remove"
                 onClick={() => onRemoveCoupon(coupon.code)}
                 aria-label={`Remove discount code ${coupon.code}`}
               >
                 Remove
-              </button>
+              </AppliedRemove>
             </li>
           ))}
-        </ul>
+        </AppliedList>
       ) : null}
 
-      <div className="ledger">
-        <div className="ledger__row">
+      <Ledger>
+        <LedgerRow>
           <span>Subtotal</span>
-          <span className="lead-sm">{money(subtotal, totals)}</span>
-        </div>
+          <LeadSm>{money(subtotal, totals)}</LeadSm>
+        </LedgerRow>
 
-        <div className="ledger__row">
+        <LedgerRow>
           <span>Shipping</span>
-          <span className="ledger__muted">
+          <LedgerMuted>
             {shipping === null ? "Calculated at next step" : Number(shipping) === 0 ? "Free" : money(shipping, totals)}
-          </span>
-        </div>
+          </LedgerMuted>
+        </LedgerRow>
 
-        <div className="ledger__row ledger__row--total">
-          <span className="lead-md">Total</span>
-          <span className="lead-md">
-            {money(total, totals)} <small className="body-xs muted">{totals.currency_code}</small>
-          </span>
-        </div>
-      </div>
+        <LedgerRow $total>
+          <LeadMd>Total</LeadMd>
+          <LeadMd>
+            {money(total, totals)} <BodyXs $muted as="small">{totals.currency_code}</BodyXs>
+          </LeadMd>
+        </LedgerRow>
+      </Ledger>
 
-      <div className="assurance">
+      <Assurance>
         <span>Secure checkout</span>
         <span>Free returns</span>
-      </div>
-    </div>
+      </Assurance>
+    </Summary>
   );
 }
 
-function ContactSummary({ address, onEdit }) {
+function ContactCard({ address, onEdit }) {
   return (
-    <div className="contact-summary">
+    <ContactSummary>
       <div>
-        <p className="body-sm">
+        <BodySm>
           {address.first_name} {address.last_name}
-        </p>
-        <p className="body-sm muted">{address.email}</p>
-        <p className="body-sm muted">
+        </BodySm>
+        <BodySm $muted>{address.email}</BodySm>
+        <BodySm $muted>
           {address.address_1}
           {address.address_2 ? `, ${address.address_2}` : ""}, {address.city} {address.state}{" "}
           {address.postcode}, {address.country}
-        </p>
+        </BodySm>
       </div>
 
-      <button type="button" className="btn-link" onClick={onEdit}>
+      <TextLink type="button" onClick={onEdit}>
         Change
-      </button>
-    </div>
+      </TextLink>
+    </ContactSummary>
   );
 }
 
@@ -699,42 +704,42 @@ function ContactSummary({ address, onEdit }) {
  * Confirmation
  * ------------------------------------------------------------------ */
 
-function Confirmation({ receipt }) {
+function OrderConfirmation({ receipt }) {
   const { order, totals, paymentLabel } = receipt;
   const reference = order.order_number ?? order.order_id;
   const email = order.billing_address?.email;
 
   return (
-    <main className="page container-narrow confirmation">
-      <p className="sub-sm">Thank you</p>
+    <Confirmation as="main">
+      <SubSm>Thank you</SubSm>
 
-      <h1 className="hdr-lg confirmation__title">Order confirmed</h1>
+      <H1>Order confirmed</H1>
 
-      <p className="body-md muted">
+      <BodyMd $muted>
         Order <strong>#{reference}</strong> is on its way. A
         confirmation has been sent to {email ?? "your inbox"}.
-      </p>
+      </BodyMd>
 
-      <dl className="confirmation__list">
+      <ConfirmationList>
         <div>
-          <dt className="sub-xs muted">Order number</dt>
-          <dd className="lead-sm">#{reference}</dd>
+          <SubXs $muted as="dt">Order number</SubXs>
+          <LeadSm as="dd">#{reference}</LeadSm>
         </div>
         <div>
-          <dt className="sub-xs muted">Total</dt>
-          <dd className="lead-sm">{money(Number(totals.total_price ?? 0), totals)}</dd>
+          <SubXs $muted as="dt">Total</SubXs>
+          <LeadSm as="dd">{money(Number(totals.total_price ?? 0), totals)}</LeadSm>
         </div>
         <div>
-          <dt className="sub-xs muted">Payment</dt>
-          <dd className="lead-sm">{paymentLabel ?? order.payment_method ?? "—"}</dd>
+          <SubXs $muted as="dt">Payment</SubXs>
+          <LeadSm as="dd">{paymentLabel ?? order.payment_method ?? "—"}</LeadSm>
         </div>
-      </dl>
+      </ConfirmationList>
 
-      <Link to="/shop" className="btn">
+      <Button as={Link} to="/shop">
         Continue shopping
         <ArrowIcon />
-      </Link>
-    </main>
+      </Button>
+    </Confirmation>
   );
 }
 
@@ -742,7 +747,7 @@ function Confirmation({ receipt }) {
  * Form field
  * ------------------------------------------------------------------ */
 
-function Field({
+function CheckoutField({
   name,
   label,
   value,
@@ -757,17 +762,16 @@ function Field({
   const invalid = Boolean(error);
 
   return (
-    <div className={`field ${invalid ? "field--invalid" : ""}`}>
-      <label className="field__label" htmlFor={`co-${name}`}>
+    <Field>
+      <FieldLabel as="label" htmlFor={`co-${name}`}>
         {label}
-        {rest.required ? <span className="req"> *</span> : null}
-      </label>
+        {rest.required ? <span> *</span> : null}
+      </FieldLabel>
 
       {select ? (
-        <select
+        <Select
           id={`co-${name}`}
           name={name}
-          className="field__select"
           value={value}
           onChange={(event) => onChange({ [name]: event.target.value })}
           aria-invalid={invalid}
@@ -779,22 +783,20 @@ function Field({
               {option.label}
             </option>
           ))}
-        </select>
+        </Select>
       ) : textarea ? (
-        <textarea
+        <Textarea
           id={`co-${name}`}
           name={name}
-          className="field__textarea"
           value={value}
           onChange={(event) => onChange({ [name]: event.target.value })}
           aria-invalid={invalid}
           {...rest}
         />
       ) : (
-        <input
+        <Input
           id={`co-${name}`}
           name={name}
-          className="field__input"
           type={type}
           value={value}
           onChange={(event) => onChange({ [name]: event.target.value })}
@@ -805,11 +807,11 @@ function Field({
       )}
 
       {invalid ? (
-        <p className="field__error" id={`${name}-error`} role="alert">
+        <FieldError id={`${name}-error`} role="alert">
           {error}
-        </p>
+        </FieldError>
       ) : null}
-    </div>
+    </Field>
   );
 }
 
