@@ -10,8 +10,7 @@ import {
   FieldLabel,
   FieldRow,
   FormError,
-  Input,
-  LeadMd
+  Input
 } from "../../../shared/ui/accountForms.js";
 import {
   BodySm,
@@ -44,6 +43,8 @@ import {
   Tab,
   Thumb
 } from "../../../shared/ui/accountLayout.js";
+import { OrderView } from "./orderDetail.css.js";
+import { ChevronIcon } from "../../../shared/ui/Icons.jsx";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -58,7 +59,8 @@ function toForm(customer) {
     address_1: customer.billing?.address_1 ?? "",
     city: customer.billing?.city ?? "",
     state: customer.billing?.state ?? "",
-    postcode: customer.billing?.postcode ?? ""
+    postcode: customer.billing?.postcode ?? "",
+    country: customer.billing?.country || "US"
   };
 }
 
@@ -114,10 +116,12 @@ function ProfilePanel() {
         billing_city: values.city.trim(),
         billing_state: values.state.trim(),
         billing_postcode: values.postcode.trim(),
+        billing_country: values.country,
         shipping_address_1: values.address_1.trim(),
         shipping_city: values.city.trim(),
         shipping_state: values.state.trim(),
-        shipping_postcode: values.postcode.trim()
+        shipping_postcode: values.postcode.trim(),
+        shipping_country: values.country
       });
       setSaved(true);
     } catch (err) {
@@ -221,6 +225,32 @@ function ProfilePanel() {
             />
           </Field>
         </FieldRow>
+
+        {/* State and country were never rendered, so a shopper could not see or
+            correct the two fields checkout needs to match a shipping zone. */}
+        <FieldRow>
+          <Field>
+            <FieldLabel htmlFor="account-state">State</FieldLabel>
+            <Input
+              id="account-state"
+              name="state"
+              value={values.state}
+              onChange={update("state")}
+              autoComplete="address-level1"
+            />
+          </Field>
+
+          <Field>
+            <FieldLabel htmlFor="account-country">Country</FieldLabel>
+            <Input
+              id="account-country"
+              name="country"
+              value={values.country}
+              onChange={update("country")}
+              autoComplete="country"
+            />
+          </Field>
+        </FieldRow>
       </ProfileGrid>
 
       <SaveBar>
@@ -297,7 +327,7 @@ function OrdersPanel() {
   return (
     <OrderList>
       {orders.map((order) => (
-        <OrderRow key={order.id}>
+        <OrderRow key={order.id} as={Link} to={`/account/orders/${order.id}`} $link>
           <div>
             <OrderMeta>
               <OrderNumber>Order #{order.number}</OrderNumber>
@@ -323,6 +353,10 @@ function OrdersPanel() {
 
           <OrderTotal>
             <strong>{decimalMoney(order.total, order.currency)}</strong>
+            <OrderView>
+              View details
+              <ChevronIcon size={12} direction="right" />
+            </OrderView>
           </OrderTotal>
         </OrderRow>
       ))}
@@ -343,8 +377,10 @@ export default function Account() {
       <Container>
         <PageHeader>
           <AuthIntro>
-            <H1>Hello{isResolved && customer.first_name ? `, ${customer.first_name}` : ""}</H1>
-            <LeadMd $weight={400}>{customer.email}</LeadMd>
+            {/* The address lives in Your details; the greeting is just a welcome. */}
+            <H1>
+              Hello{isResolved && customer.first_name ? `, ${customer.first_name}` : ""}
+            </H1>
           </AuthIntro>
         </PageHeader>
 

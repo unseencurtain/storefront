@@ -88,8 +88,18 @@ export function CheckIcon({ size = 14, ...rest }) {
   );
 }
 
-export function MinusIcon({ size = 12, ...rest }) {
+/** Reveal/hide a password. Crossed out when the value is already visible. */
+export function EyeIcon({ size = 18, off = false, ...rest }) {
   return (
+    <svg viewBox="0 0 20 20" width={size} height={size} {...base} {...rest}>
+      <path d="M1.8 10S4.9 4.8 10 4.8 18.2 10 18.2 10 15.1 15.2 10 15.2 1.8 10 1.8 10Z" />
+      <circle cx="10" cy="10" r="2.4" />
+      {off ? <path d="M3.4 16.6 16.6 3.4" /> : null}
+    </svg>
+  );
+}
+
+export function MinusIcon({ size = 12, ...rest }) {  return (
     <svg viewBox="0 0 12 12" width={size} height={size} {...base} strokeWidth={1.5} {...rest}>
       <path d="M2 6h8" />
     </svg>

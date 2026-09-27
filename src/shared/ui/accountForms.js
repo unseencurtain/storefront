@@ -32,6 +32,9 @@ export const AuthShell = styled(ContainerNarrow)`
 
 export const AuthIntro = styled.header`
   max-width: 460px;
+  /* The 460px column is narrower than the shell, so it has to be centred
+     itself or the heading and form sit off to the left. */
+  margin-inline: auto;
   margin-bottom: 44px;
 
   ${H1} {
@@ -40,6 +43,10 @@ export const AuthIntro = styled.header`
 `;
 
 export const AuthNote = styled(BodySm)`
+  /* Keep the closing line inside the same 460px column as the form, otherwise
+     it spans the shell and sits visibly left of the fields. */
+  max-width: 460px;
+  margin-inline: auto;
   margin-top: 28px;
   color: ${({ theme: t }) => t.color.sonicSilver};
 
@@ -53,6 +60,7 @@ export const AuthNote = styled(BodySm)`
 
 export const Form = styled.form`
   max-width: 460px;
+  margin-inline: auto;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -72,7 +80,10 @@ export const FormError = styled.p`
   color: ${({ theme: t }) => t.color.cocoa};
 `;
 
-export const Submit = styled(Button)`
+/** `Button` carries `attrs({ type: "button" })`, and that value wins over a
+ *  `type` prop passed at the call site — which left these forms with no submit
+ *  control at all. Re-asserting it here keeps the button a real submit. */
+export const Submit = styled(Button).attrs({ type: "submit" })`
   align-self: flex-start;
   min-width: 200px;
 `;

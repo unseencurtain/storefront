@@ -472,6 +472,13 @@
   gap: 8px;
 }
 
+@media (min-width: 1024px) {
+  /* Desktop shows the filter column inline, so it needs no trigger. */
+  .shop__filterbtn {
+    display: none;
+  }
+}
+
 .shop__layout {
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr);
@@ -521,7 +528,9 @@
   border-bottom: 1px solid var(--c-grey-200);
 }
 
-.filters__close {
+/* Element-qualified so it cannot be beaten by .icon-btn in ui.css, which is
+   imported after this sheet. The close cross belongs to the mobile drawer. */
+button.filters__close {
   display: none;
 }
 
@@ -1146,7 +1155,7 @@
 }
 
 .cat-tile:hover {
-  border-color: var(--c-cocoa);
+  border-color: var(--c-grey-400);
 }
 
 .cat-tile__media {
@@ -1421,7 +1430,7 @@
     visibility: visible;
   }
 
-  .filters__close {
+  button.filters__close {
     display: inline-flex;
   }
 

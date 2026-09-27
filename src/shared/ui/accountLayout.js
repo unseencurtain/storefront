@@ -115,6 +115,19 @@ export const OrderRow = styled.li`
     border-bottom: 0;
   }
 
+  /* Clickable rows open the order detail view. */
+  ${({ $link, theme: t }) =>
+    $link &&
+    `
+    text-decoration: none;
+    color: inherit;
+    transition: background-color ${t.motion.fast} ${t.motion.ease};
+
+    &:hover {
+      background: ${t.color.stone};
+    }
+  `}
+
   @media (min-width: 768px) {
     grid-template-columns: 1fr auto;
     align-items: start;

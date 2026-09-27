@@ -1,6 +1,6 @@
 import { Link, useLocation, useParams } from "react-router-dom";
 import { getPages } from "../../../shared/lib/woo.js";
-import { decodeEntities } from "../../../shared/lib/catalog.js";
+import { decodeEntities } from "../../../shared/lib/format.js";
 import { useEffect, useState } from "react";
 import { ArrowIcon, BagIcon } from "../../../shared/ui/Icons.jsx";
 import { Accordion } from "../../../shared/ui/Accordion.jsx";

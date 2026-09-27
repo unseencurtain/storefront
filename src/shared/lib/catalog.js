@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getProductCategories, getProducts, getProductTags } from "./woo.js";
-import { titleCase } from "./format.js";
+import { titleCase, decodeEntities } from "./format.js";
 
 /**
  * The header nav, the shop sidebar and the search panel all need the product
@@ -37,13 +37,6 @@ function normaliseCategory(category) {
     description: category.description ?? "",
     href: `/shop/${category.slug}`
   };
-}
-
-export function decodeEntities(value = "") {
-  if (typeof document === "undefined") return value;
-  const area = document.createElement("textarea");
-  area.innerHTML = value;
-  return area.value;
 }
 
 /** Nest a flat category list into `[{ ...category, children: [] }]`. */

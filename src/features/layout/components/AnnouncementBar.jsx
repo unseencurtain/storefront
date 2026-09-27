@@ -86,7 +86,7 @@ export default function AnnouncementBar() {
           {/* Keyed so the slide-in animation replays on each rotation. */}
           <AnnounceText key={index}>{OFFERS[index].title}</AnnounceText>
           <AnnounceChevron aria-hidden="true">
-            <ArrowIcon size={12} direction="down" />
+            <ArrowIcon size={14} direction="right" />
           </AnnounceChevron>
         </AnnounceButton>
       </AnnounceBar>

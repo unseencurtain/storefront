@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { getProducts, getProductTags } from "../../../shared/lib/woo.js";
 import { useCategories, groupCategories, loadCategories } from "../../../shared/lib/catalog.js";
 import ProductCard from "../../../features/catalog/components/ProductCard.jsx";
@@ -24,6 +24,7 @@ const SORTS = [
  */
 export default function Shop() {
   const { slug, child } = useParams();
+  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const { flat } = useCategories();
 
@@ -100,11 +101,18 @@ export default function Shop() {
     setParams(merged, { replace: true });
   }
 
+  function clearCategory() {
+    const next = new URLSearchParams(params);
+    next.delete("category");
+    next.delete("page");
+    navigate({ pathname: "/shop", search: next.toString() });
+  }
+
   const heading = current?.name ?? (search ? `Results for “${search}”` : "Shop All");
   const description = current?.description || "";
 
   const activeChips = [
-    current ? { key: "category", label: current.name, href: categoryPathFor(current, flat) } : null,
+    current ? { key: "category", label: current.name, onClear: clearCategory } : null,
     onSale ? { key: "on_sale", label: "On sale" } : null,
     activeTag ? { key: "tag", label: tags.find((t) => t.slug === activeTag)?.name ?? activeTag } : null,
     search ? { key: "search", label: `“${search}”` } : null
@@ -142,21 +150,16 @@ export default function Shop() {
           <ul className="chips">
             {activeChips.map((chip) => (
               <li key={chip.key}>
-                {chip.href ? (
-                  <Link to={chip.href} className="tag is-active">
-                    {chip.label}
-                    <CloseIcon size={11} />
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    className="tag is-active"
-                    onClick={() => update([[chip.key, null]])}
-                  >
-                    {chip.label}
-                    <CloseIcon size={11} />
-                  </button>
-                )}
+                <button
+                  type="button"
+                  className="tag is-active"
+                  onClick={() =>
+                    chip.onClear ? chip.onClear() : update([[chip.key, null]])
+                  }
+                >
+                  {chip.label}
+                  <CloseIcon size={11} />
+                </button>
               </li>
             ))}
           </ul>
@@ -241,13 +244,6 @@ export default function Shop() {
       </div>
     </main>
   );
-}
-
-function categoryPathFor(category, flat) {
-  if (!category.parent) return `/shop/${category.slug}`;
-
-  const parent = flat.find((entry) => entry.id === category.parent);
-  return parent ? `/shop/${parent.slug}/${category.slug}` : `/shop/${category.slug}`;
 }
 
 /* ------------------------------------------------------------------ *

@@ -72,7 +72,7 @@ export const DrawerHead = styled.div`
   gap: 16px;
   flex: 0 0 auto;
   height: 60px;
-  padding: 0 32px;
+  padding: 0 24px;
   border-bottom: 1px solid ${({ theme: t }) => t.color.grey200};
 
   ${mq.lg} {
@@ -84,7 +84,7 @@ export const DrawerBody = styled.div`
   flex: 1 1 auto;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 20px 32px 32px;
+  padding: 20px 24px 32px;
   scrollbar-width: none;
 
   &::-webkit-scrollbar {
@@ -97,18 +97,32 @@ export const DrawerBody = styled.div`
 `;
 
 export const DrawerFoot = styled.div`
+  position: relative;
+  z-index: 20;
   flex: 0 0 auto;
-  border-top: 1px solid ${({ theme: t }) => t.color.grey200};
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  /* Same inline padding as the head and body, so the pinned actions line up
+     with the items above instead of running into the panel edges. The upward
+     shadow does the separating, so there is no border rule. */
+  padding: 16px 24px 8px;
   background: ${({ theme: t }) => t.color.white};
+  box-shadow: ${({ theme: t }) => t.shadow.lift};
+
+  ${mq.lg} {
+    padding: 16px 16px 8px;
+  }
 
   ${({ $row }) =>
     $row &&
     css`
-      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      padding: 20px 32px;
+      gap: 14px 16px;
+      padding: 20px 24px;
 
       ${mq.lg} {
         padding: 20px 16px;
@@ -350,6 +364,12 @@ export const CartCount = styled.span`
 export const NavRail = styled.nav`
   position: relative;
   border-top: 1px solid ${({ theme: t }) => t.color.grey200};
+
+  /* The rail's items are hover-and-panel buttons, so below the breakpoint the
+     burger owns navigation and this row is dead weight. */
+  @media (max-width: 1023px) {
+    display: none;
+  }
 `;
 
 export const NavRailList = styled.ul`
@@ -470,11 +490,15 @@ export const MegaProducts = styled.div`
   }
 `;
 
-export const MegaProductGrid = styled.div`
+/** A real list so the browser paints no `disc` markers on the bare <li> rows —
+ *  the global reset only clears `ul`/`ol`, not orphaned `li` elements. */
+export const MegaProductGrid = styled.ul`
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   margin-top: 16px;
+  list-style: none;
+  padding: 0;
 `;
 
 /* ---- Mobile menu -------------------------------------------- */
@@ -569,12 +593,16 @@ export const MenuSubLink = styled.a`
 
 export const MenuUtils = styled.ul`
   display: flex;
+  flex: 0 0 auto;
   gap: 20px;
 `;
 
 export const MenuSocial = styled.ul`
   display: flex;
+  flex: 0 0 auto;
   gap: 14px;
+  /* Stays hard right when the foot wraps onto two rows on a narrow phone. */
+  margin-left: auto;
 `;
 
 export const MenuSocialLink = styled.a`

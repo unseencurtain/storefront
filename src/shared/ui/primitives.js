@@ -127,7 +127,9 @@ export const SrOnly = styled.span`
    Buttons
    ============================================================= */
 
-export const Button = styled.button`
+/** A bare <button> inside a <form> defaults to type="submit", which silently
+ *  submits the form. Opt in with type="submit" where that is wanted. */
+export const Button = styled.button.attrs({ type: "button" })`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -181,21 +183,19 @@ export const Button = styled.button`
       return t.color.springWood;
     }};
     border-color: ${({ theme: t, $quiet, $variant }) => {
-      if ($quiet) return t.color.grey300;
-      if ($variant === "secondary") return t.color.grey300;
+      if ($quiet) return t.color.tan;
+      if ($variant === "secondary") return t.color.tan;
       return t.color.springWood;
     }};
-    color: ${({ theme: t, $quiet, $variant }) => {
-      if ($quiet) return t.color.grey300;
-      if ($variant === "secondary") return t.color.grey300;
-      return t.color.grey400;
-    }};
+    /* grey400 on springWood was 2.12:1 and grey300 on the page was lower still,
+       so a disabled label read as an empty button. cavernous clears 7:1. */
+    color: ${({ theme: t }) => t.color.cavernous};
     cursor: not-allowed;
   }
 `;
 
 /** Small-caps text button — "Shop all", "Change", inline actions. */
-export const ButtonLink = styled.button`
+export const ButtonLink = styled.button.attrs({ type: "button" })`
   display: inline-flex;
   align-items: center;
   gap: ${({ $large }) => ($large ? "6px" : "4px")};
@@ -510,19 +510,23 @@ export const AccordionIcon = styled.span`
     transform: translate(-50%, -50%);
   }
 
+  /* The two bars are both horizontal, so they need the vertical one stood up
+   * to read as "+" while closed; expanding rotates it back down onto the
+   * other bar to read as "-". */
   &::after {
+    transform: translate(-50%, -50%) rotate(90deg);
     transition: transform 250ms ${({ theme: t }) => t.motion.ease};
   }
 
   ${AccordionTrigger}[aria-expanded="true"] &::after {
-    transform: translate(-50%, -50%) rotate(90deg);
+    transform: translate(-50%, -50%);
   }
 
   ${({ $open }) =>
     $open &&
     css`
       &::after {
-        transform: translate(-50%, -50%) rotate(90deg);
+        transform: translate(-50%, -50%);
       }
     `}
 `;
@@ -569,6 +573,26 @@ export const Assurance = styled.div`
 /* =============================================================
    Layout atoms
    ============================================================= */
+
+/** Page shell: the app-wide `.page` min-height + fade-in. */
+export const Page = styled.main`
+  min-height: 55vh;
+  animation: ${({ theme: t }) => `cereve-fade ${t.motion.base} ${t.motion.ease} both`};
+`;
+
+/** Centred loading / empty state block. Pairs with the global `.spinner`. */
+export const StateMsg = styled.div`
+  display: grid;
+  place-items: center;
+  gap: 18px;
+  padding: 120px 32px;
+  text-align: center;
+  color: ${({ theme: t }) => t.color.sonicSilver};
+
+  ${mq.lg} {
+    padding-inline: 16px;
+  }
+`;
 
 export const Container = styled.div`
   max-width: ${({ theme: t }) => t.layout.container};

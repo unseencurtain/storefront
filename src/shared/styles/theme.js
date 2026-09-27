@@ -25,7 +25,7 @@ export const theme = {
     stone: "#fbf9f7",
     /** Secondary copy, accordion headers. */
     sonicSilver: "#757575",
-    /** Tertiary copy, input underlines. */
+    /** Tertiary copy. */
     cavernous: "#525252",
     /** Error text, announcement bar. */
     rust: "#a2605a",
@@ -37,6 +37,8 @@ export const theme = {
     /** Borders, disabled ink. */
     grey300: "#d6d0c7",
     grey400: "#b0a9a0",
+    /** Form control border, card hairlines. */
+    tan: "#bba293",
     /** Cart line dividers. */
     greyLightish: "#dddddd",
     cartBanner: "#faf8f6",
@@ -48,7 +50,9 @@ export const theme = {
 
   shadow: {
     panel: "0 10px 20px rgba(0, 0, 0, 0.15)",
-    float: "0 12px 16px -4px rgba(0, 0, 0, 0.16), 0 4px 6px -2px rgba(0, 0, 0, 0.04)"
+    float: "0 12px 16px -4px rgba(0, 0, 0, 0.16), 0 4px 6px -2px rgba(0, 0, 0, 0.04)",
+    /* Casts upward so a bar pinned to the bottom edge reads as floating. */
+    lift: "0 -4px 8px -2px rgba(0, 0, 0, 0.16), 0 -2px 4px -2px rgba(0, 0, 0, 0.04)"
   },
 
   font: {

@@ -36,6 +36,24 @@ export function titleCase(value = "") {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+/**
+ * WooCommerce escapes some plain-text fields but not others — a product title
+ * arrives as `Men&#8217;s Sweater` while the category nested inside the same
+ * payload arrives decoded. Rendering the raw title shows the entity, so every
+ * display string is run through here.
+ *
+ * Only safe for text, not for the `description` / `short_description` HTML
+ * bodies, which must reach the DOM still escaped. A no-op on clean strings.
+ */
+export function decodeEntities(value = "") {
+  if (typeof value !== "string" || !value.includes("&")) return value ?? "";
+  if (typeof document === "undefined") return value;
+
+  const area = document.createElement("textarea");
+  area.innerHTML = value;
+  return area.value;
+}
+
 export function plural(count, singular, pluralForm) {
   return count === 1 ? singular : (pluralForm ?? `${singular}s`);
 }

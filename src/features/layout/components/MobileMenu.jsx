@@ -8,7 +8,6 @@ import {
   SearchIcon,
   AccountIcon,
   BagIcon,
-  ArrowIcon,
   CheckIcon
 } from "../../../shared/ui/Icons.jsx";
 import { ButtonLink, IconButton } from "../../../shared/ui/primitives.js";
@@ -186,7 +185,6 @@ function NavRow({ label, to, onNavigate, expanded, onToggle, strong }) {
     return (
       <MenuLink as={Link} to={to} onClick={onNavigate} $strong={strong}>
         {label}
-        <ArrowIcon size={13} />
       </MenuLink>
     );
   }

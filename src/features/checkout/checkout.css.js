@@ -1,17 +1,25 @@
 /**
  * Checkout styles, ported 1:1 from the legacy `.checkout*`, `.summary*`,
- * `.ledger*`, `.steps*`, `.rate*`, `.promo*` and `.field*` rules so the page
+ * `.steps*`, `.rate*`, `.promo*` and `.field*` rules so the page
  * keeps the exact approved design while the CSS files shrink.
  */
 import styled, { css } from "styled-components";
 import { mq } from "../../shared/styles/theme.js";
 import {
-  Container,
   ContainerInset,
   ContainerNarrow,
   Muted,
-  SubMd
+  SrOnly,
+  SubSm
 } from "../../shared/ui/primitives.js";
+import {
+  Ledger,
+  LedgerRow,
+  LedgerMuted,
+  Assurance
+} from "../cart/cart.css.js";
+
+export { Ledger, LedgerRow, LedgerMuted, Assurance };
 
 /* ---- Reusable atoms lifted out of ui.css -------------------- */
 
@@ -55,9 +63,12 @@ export const Button = styled.button.attrs((p) => ({
   }
 
   &:disabled {
-    color: ${({ theme: t }) => t.color.grey300};
-    border-color: ${({ theme: t }) => t.color.grey300};
-    background: ${({ theme: t, $quiet }) => ($quiet ? "transparent" : t.color.grey300)};
+    /* These were all grey300, so a disabled label was grey300 on grey300 --
+       1:1 and completely invisible. "Apply" and "Continue to payment" both
+       start disabled, so they read as empty buttons. */
+    color: ${({ theme: t }) => t.color.cavernous};
+    border-color: ${({ theme: t }) => t.color.tan};
+    background: ${({ theme: t, $quiet }) => ($quiet ? "transparent" : t.color.grey200)};
     cursor: not-allowed;
   }
 
@@ -124,18 +135,20 @@ export const InlineLink = styled.a`
 const control = css`
   width: 100%;
   min-height: 48px;
-  padding: 14px 2px;
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid
-    ${({ theme: t, $invalid }) => ($invalid ? t.color.rust : t.color.cocoa)};
-  border-radius: 0;
+  padding: 13px 14px;
+  background: ${({ theme: t }) => t.color.white};
+  border: 1px solid
+    ${({ theme: t, $invalid }) => ($invalid ? t.color.rust : t.color.tan)};
+  border-radius: 12px;
   color: ${({ theme: t }) => t.color.cocoa};
   font-family: ${({ theme: t }) => t.font.sans};
   font-size: ${({ theme: t }) => t.type.bodyMd[0]};
   line-height: 1.5;
   letter-spacing: ${({ theme: t }) => t.type.bodyMd[1]};
-  transition: border-color ${({ theme: t }) => `${t.motion.fast} ${t.motion.ease}`};
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition:
+    border-color ${({ theme: t }) => `${t.motion.fast} ${t.motion.ease}`},
+    box-shadow ${({ theme: t }) => `${t.motion.fast} ${t.motion.ease}`};
 
   &::placeholder {
     color: ${({ theme: t }) => t.color.grey400};
@@ -143,9 +156,19 @@ const control = css`
 
   &:focus {
     outline: none;
-    border-bottom-color: ${({ theme: t }) => t.color.cocoa};
-    border-bottom-width: 2px;
-    padding-bottom: 13px;
+    border-color: ${({ theme: t }) => t.color.cocoa};
+    box-shadow: 0 0 0 3px rgba(94, 80, 71, 0.1);
+  }
+
+  ${({ $invalid, theme: t }) =>
+    $invalid &&
+    `
+      box-shadow: 0 0 0 3px rgba(170, 26, 33, 0.08);
+    `}
+
+  &:-webkit-autofill {
+    -webkit-text-fill-color: ${({ theme: t }) => t.color.cocoa};
+    box-shadow: 0 0 0 40px ${({ theme: t }) => t.color.white} inset;
   }
 `;
 
@@ -154,19 +177,9 @@ export const Field = styled.div`
   position: relative;
 `;
 
-export const FieldLabel = styled.label`
-  display: block;
-  margin-bottom: 8px;
-  font-size: ${({ theme: t }) => t.type.bodyXs[0]};
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: ${({ theme: t }) => t.color.cocoa};
-
-  span {
-    color: ${({ theme: t }) => t.color.rust};
-  }
-`;
+/** The label is still announced to screen readers; the placeholder carries the
+ *  visible text inside the control, so it must not be laid out. */
+export const FieldLabel = styled(SrOnly).attrs({ as: "label" })``;
 
 export const Input = styled.input`
   ${control};
@@ -215,16 +228,16 @@ export const CheckoutPage = styled.main`
   padding-block: 48px 96px;
 `;
 
-export const CheckoutGrid = styled(Container)`
+export const CheckoutGrid = styled(ContainerInset)`
   display: grid;
-  grid-template-columns: minmax(0, 580px) minmax(0, 480px);
-  gap: 90px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 360px);
+  gap: 64px;
   justify-content: center;
   align-items: start;
 
   ${mq.lg} {
     grid-template-columns: minmax(0, 1fr);
-    gap: 40px;
+    gap: 32px;
   }
 `;
 
@@ -234,22 +247,44 @@ export const CheckoutMain = styled.div`
   gap: 24px;
 `;
 
-export const CheckoutTop = styled.div`
+/** Page header, sharing the grid's container so the wordmark and breadcrumb
+ *  sit on the same gutter instead of against the viewport edge.
+ *  `CheckoutPage` is a plain block, so the rule below is what actually opens
+ *  the gap between this border and the first row of content. */
+export const CheckoutHeader = styled(ContainerInset)`
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding-bottom: 24px;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
   border-bottom: 1px solid ${({ theme: t }) => t.color.grey200};
 `;
 
-export const Title = styled(SubMd).attrs({ as: "h1" })`
+export const CheckoutTop = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`;
+
+export const Title = styled(SubSm).attrs({ as: "h1" })`
   color: ${({ theme: t }) => t.color.cocoa};
 `;
 
-export const PanelHead = styled.h2`
-  margin-top: 12px;
+export const PanelHead = styled(SubSm).attrs({ as: "h2" })`
   color: ${({ theme: t }) => t.color.cocoa};
+
+  &:not(:first-of-type) {
+    margin-top: 28px;
+  }
+`;
+
+/** Section heading with its action opposite it, pairing "Contact" with the
+ *  returning-customer link. */
+export const ContactHead = styled.div`
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
 `;
 
 export const Panel = styled.section`
@@ -262,58 +297,51 @@ export const Panel = styled.section`
   }
 `;
 
+/** Breadcrumb progress, matching the reference: an inline run of steps
+ *  separated by chevrons, with the current one emphasised. */
 export const Steps = styled.ol`
   display: flex;
   align-items: center;
-  gap: 8px;
   flex-wrap: wrap;
-  padding-bottom: 8px;
+  gap: 6px;
   margin: 0;
+  padding: 0;
   list-style: none;
+  color: ${({ theme: t }) => t.color.grey400};
 `;
 
 export const StepItem = styled.li`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+
   &:not(:last-child)::after {
     content: "";
     display: inline-block;
-    width: 24px;
-    height: 1px;
-    margin-left: 8px;
-    background: ${({ theme: t }) => t.color.grey300};
-    vertical-align: middle;
+    width: 6px;
+    height: 6px;
+    border-top: 1px solid currentColor;
+    border-right: 1px solid currentColor;
+    transform: rotate(45deg);
+    opacity: 0.6;
   }
 `;
 
 export const StepButton = styled.button`
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  margin: 0;
   padding: 0;
   border: 0;
   background: none;
   font-family: ${({ theme: t }) => t.font.sans};
-  font-size: ${({ theme: t }) => t.type.bodyXs[0]};
-  font-weight: 500;
-  letter-spacing: 0.04em;
+  font-size: ${({ theme: t }) => t.type.subheaderXs[0]};
+  font-weight: ${({ $state }) => ($state === "current" ? 600 : 400)};
+  letter-spacing: ${({ theme: t }) => t.type.subheaderXs[1]};
   text-transform: uppercase;
+  text-align: left;
   color: ${({ theme: t, $state }) =>
     $state === "todo" ? t.color.grey400 : t.color.cocoa};
   cursor: ${({ $state }) => ($state === "done" ? "pointer" : "default")};
-`;
-
-export const StepDot = styled.span`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border: 1px solid currentColor;
-  border-radius: 50%;
-  font-size: 11px;
-  background: ${({ theme: t, $state }) =>
-    $state === "current" ? t.color.cocoa : "transparent"};
-  color: ${({ theme: t, $state }) =>
-    $state === "current" ? t.color.white : "inherit"};
 `;
 
 export const ErrorBanner = styled.p`
@@ -350,6 +378,13 @@ export const CheckoutNav = styled.div`
   justify-content: space-between;
   gap: 16px;
   padding-top: 8px;
+`;
+
+/** Secondary way out of checkout, stacked under the primary action. */
+export const ReturnRow = styled.div`
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
 `;
 
 export const ContactSummary = styled.div`
@@ -429,9 +464,59 @@ export const SummaryAside = styled.aside`
   position: sticky;
   top: 32px;
 
+  /* One column on mobile, so the rail has to lead. Left in DOM order it landed
+     under the whole form and under the place-order button, which put the total
+     the shopper is agreeing to off screen at the moment they submit. */
   ${mq.lg} {
     position: static;
+    order: -1;
   }
+`;
+
+/** Mobile-only summary header: the total is always visible, the detail is not. */
+export const SummaryBar = styled.button.attrs({ type: "button" })`
+  display: none;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 16px 0;
+  border-bottom: 1px solid ${({ theme: t }) => t.color.grey300};
+  color: ${({ theme: t }) => t.color.cocoa};
+  text-align: left;
+  cursor: pointer;
+  transition: color ${({ theme: t }) => `${t.motion.slow} ${t.motion.ease}`};
+
+  /* Label (with its caret) reads as the heading; the total sits opposite it. */
+  & > span:first-child {
+    flex: 0 0 auto;
+  }
+
+  & > span:last-child {
+    flex: 1 1 auto;
+    text-align: right;
+  }
+
+  &:hover {
+    color: ${({ theme: t }) => t.color.kabulHover};
+  }
+
+  ${mq.lg} {
+    display: flex;
+  }
+`;
+
+/** The caret belongs to the label it discloses, so it sits directly after the
+ *  words "Order summary" rather than trailing the total. */
+export const SummaryBarLabel = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+`;
+
+/** Disclosure caret: points down while closed, up once the detail is showing. */
+export const SummaryBarIcon = styled.span`
+  display: inline-flex;
 `;
 
 export const Summary = styled.div`
@@ -439,8 +524,30 @@ export const Summary = styled.div`
   flex-direction: column;
   gap: 20px;
   padding: 32px;
-  background: ${({ theme: t }) => t.color.stone};
-  border: 1px solid ${({ theme: t }) => t.color.grey200};
+
+  ${mq.lg} {
+    display: ${({ $open }) => ($open ? "flex" : "none")};
+    padding: 20px 0 0;
+  }
+`;
+
+/** Same hairline language as the bag and the form column: a rule under the
+ *  label, and one above the totals, instead of a filled card. */
+export const SummaryHead = styled(SubSm)`
+  color: ${({ theme: t }) => t.color.cocoa};
+  padding-bottom: 16px;
+  border-bottom: 1px solid ${({ theme: t }) => t.color.grey200};
+
+  /* The bar above already says "Order summary" on mobile. */
+  ${mq.lg} {
+    display: none;
+  }
+`;
+
+export const SummaryLedger = styled.div`
+  margin-top: 4px;
+  padding-top: 16px;
+  border-top: 1px solid ${({ theme: t }) => t.color.greyLightish};
 `;
 
 export const SummaryItems = styled.ul`
@@ -509,7 +616,10 @@ export const SummaryPrice = styled.span`
 export const PromoForm = styled.form`
   display: flex;
   gap: 10px;
+  margin-top: 4px;
+  padding-top: 24px;
   padding-bottom: 20px;
+  border-top: 1px solid ${({ theme: t }) => t.color.grey300};
 `;
 
 export const PromoInput = styled.input`
@@ -577,59 +687,8 @@ export const AppliedRemove = styled.button`
   cursor: pointer;
 `;
 
-/* ---- Totals ledger ------------------------------------------ */
-
-export const Ledger = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding-bottom: 16px;
-`;
-
-export const LedgerRow = styled.div`
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-  font-size: ${({ theme: t }) => t.type.bodyMd[0]};
-  letter-spacing: ${({ theme: t }) => t.type.bodyMd[1]};
-  color: ${({ theme: t }) => t.color.cocoa};
-
-  ${({ $total }) =>
-    $total &&
-    css`
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid ${({ theme: t }) => t.color.grey200};
-    `}
-`;
-
-export const LedgerMuted = styled.span`
-  ${Muted};
-  text-align: right;
-`;
-
-export const Assurance = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 27px;
-  overflow: hidden;
-  background: ${({ theme: t }) => t.color.cartBanner};
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: ${({ theme: t }) => t.color.cocoa};
-  white-space: nowrap;
-
-  span + span::before {
-    content: "•";
-    margin-right: 8px;
-    color: ${({ theme: t }) => t.color.sonicSilver};
-  }
-`;
+/* Ledger, LedgerRow, LedgerMuted, and Assurance now live in
+   features/cart/cart.css.js so the bag, drawer, and checkout share them. */
 
 /* ---- Empty bag + confirmation ------------------------------- */
 
@@ -667,4 +726,9 @@ export const ConfirmationList = styled.dl`
     margin: 0;
     color: ${({ theme: t }) => t.color.cocoa};
   }
+`;
+
+export const RetryButton = styled(Button)`
+  align-self: flex-start;
+  margin-top: 12px;
 `;

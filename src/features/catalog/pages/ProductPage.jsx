@@ -480,6 +480,12 @@ function ProductSkeleton() {
   return (
     <main className="page pdp">
       <div className="container">
+        {/* Mirrors the real .crumbs row so the gallery doesn't jump down once
+            the product resolves. Height must match the loaded breadcrumb. */}
+        <nav className="crumbs" aria-hidden="true">
+          <span className="skeleton" style={{ height: 21, width: "62%" }} />
+        </nav>
+
         <div className="pdp__layout">
           <div className="pdp__gallery">
             <div className="pdp__stage skeleton" style={{ aspectRatio: "3 / 4" }} />

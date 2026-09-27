@@ -12,6 +12,7 @@ import SearchPage from "./features/search/pages/SearchPage.jsx";
 import Login from "./features/account/pages/Login.jsx";
 import Signup from "./features/account/pages/Signup.jsx";
 import AccountRoute from "./features/account/pages/AccountRoute.jsx";
+import OrderDetail from "./features/account/pages/OrderDetail.jsx";
 import ContentPage, { NotFound } from "./features/content/pages/ContentPage.jsx";
 
 /** Two-segment collection paths, e.g. /shop/fashion/shoes. */
@@ -46,6 +47,7 @@ export default function App() {
                 <Route path="login" element={<Login />} />
                 <Route path="signup" element={<Signup />} />
                 <Route path="account" element={<AccountRoute />} />
+                <Route path="account/orders/:id" element={<OrderDetail />} />
 
                 <Route path="about" element={<ContentPage />} />
                 <Route path="help" element={<ContentPage />} />

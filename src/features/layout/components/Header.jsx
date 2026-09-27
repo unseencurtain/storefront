@@ -132,7 +132,9 @@ export default function Header({ onOpenSearch, onOpenMenu, onOpenCart }) {
                         onClick={() => activate(item)}
                         onMouseEnter={() => {
                           cancelClose();
-                          if (openMenu) setOpenMenu(item.id);
+                          // Hovering opens the panel outright; only the click
+                          // handler toggles, so re-entering never closes it.
+                          setOpenMenu(item.id);
                         }}
                       >
                         <span>{item.label}</span>

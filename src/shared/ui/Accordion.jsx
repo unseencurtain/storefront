@@ -95,7 +95,9 @@ const CaptureInput = styled.input`
   }
 `;
 
-const Submit = styled(ButtonLink)`
+/** See `Submit` in accountForms.js: `ButtonLink` also defaults to
+ *  `type: "button"`, which overrides the `type` prop set at the call site. */
+const Submit = styled(ButtonLink).attrs({ type: "submit" })`
   flex: 0 0 auto;
 `;
 

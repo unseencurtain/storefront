@@ -1,18 +1,47 @@
-import { useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { useCart } from "../../../features/cart/CartContext.jsx";
+import { useCart } from "../CartContext.jsx";
 import { useUI, useBodyLock } from "../../../shared/UIContext.jsx";
 import { money, itemsSubtotal, plural } from "../../../shared/lib/format.js";
 import { loadBestSellers } from "../../../shared/lib/catalog.js";
-import { useEffect } from "react";
-import QuantityStepper from "../../../shared/ui/QuantityStepper.jsx";
+import { CartLine } from "./CartLine.jsx";
+import { Ledger } from "./Ledger.jsx";
+import { FREE_SHIPPING_AT, ASSURANCE } from "../constants.js";
 import { MiniRow } from "../../catalog/components/ProductCard.jsx";
 import { CloseIcon, BagIcon, ArrowIcon, CheckIcon } from "../../../shared/ui/Icons.jsx";
-
-/** Free-shipping threshold, in minor units (cents). */
-const FREE_SHIPPING_AT = 7500;
-
-const ASSURANCE = ["Samples at checkout", "Free returns", "Secure checkout"];
+import {
+  Button,
+  FieldError,
+  IconButton,
+  LeadMd,
+  SubSm,
+  SubXs
+} from "../../../shared/ui/primitives.js";
+import { Drawer, DrawerHead, Scrim } from "../../layout/components/chrome.js";
+import {
+  AccIcon,
+  CartDrawerBody,
+  CartDrawerFoot,
+  DrawerActions,
+  DrawerAssurance,
+  DrawerEstimate,
+  DrawerLedger,
+  EmptyBag,
+  EmptyRecs,
+  LineList,
+  MeterFill,
+  MeterMsg,
+  MeterTrack,
+  Promo,
+  PromoCode,
+  PromoCodes,
+  PromoForm,
+  PromoInput,
+  PromoPanel,
+  PromoRemove,
+  PromoToggle,
+  ShipMeter
+} from "../cart.css.js";
 
 /**
  * Bag drawer.
@@ -26,8 +55,15 @@ export default function CartDrawer() {
   const open = isOpen("cart");
   const { cart, count, isEmpty, setQuantity } = useCart();
   const [promoOpen, setPromoOpen] = useState(true);
+  const bodyRef = useRef(null);
 
   useBodyLock(open);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    const body = bodyRef.current;
+    if (body) body.scrollTop = body.scrollHeight;
+  }, [open, count]);
 
   const currency = cart.totals ?? {};
   const subtotal = useMemo(
@@ -40,33 +76,33 @@ export default function CartDrawer() {
 
   return (
     <>
-      <div className="drawer-scrim drawer-scrim--soft" data-open={open} onClick={close} aria-hidden="true" />
+      <Scrim $open={open} $tone="soft" $z={70} onClick={close} aria-hidden="true" />
 
-      <aside
-        className="drawer drawer--right cart-drawer"
-        data-open={open}
+      <Drawer
+        $open={open}
+        $side="right"
         role="dialog"
         aria-modal={open}
         aria-labelledby="cart-drawer-title"
         aria-hidden={!open}
       >
-        <div className="drawer__head cart-drawer__head">
-          <h2 id="cart-drawer-title" className="sub-sm">
+        <DrawerHead>
+          <SubSm as="h2" id="cart-drawer-title">
             Shopping bag ({count}) {plural(count, "item")}
-          </h2>
+          </SubSm>
 
-          <button type="button" className="icon-btn" onClick={close} aria-label="Close shopping bag">
+          <IconButton type="button" onClick={close} aria-label="Close shopping bag">
             <CloseIcon />
-          </button>
-        </div>
+          </IconButton>
+        </DrawerHead>
 
-        <div className="drawer__body cart-drawer__body">
+        <CartDrawerBody ref={bodyRef}>
           {isEmpty ? (
-            <EmptyBag onClose={close} />
+            <EmptyBagBody onClose={close} />
           ) : (
             <>
-              <div className="ship-meter">
-                <p className="ship-meter__msg">
+              <ShipMeter>
+                <MeterMsg>
                   {remaining > 0 ? (
                     <>
                       Add <strong>{money(remaining, currency)}</strong> more for free shipping
@@ -74,108 +110,63 @@ export default function CartDrawer() {
                   ) : (
                     <>You now have free shipping.</>
                   )}
-                </p>
+                </MeterMsg>
 
-                <div className="ship-meter__track" role="progressbar" aria-valuemin={0} aria-valuemax={FREE_SHIPPING_AT} aria-valuenow={subtotal} aria-label="Progress towards free shipping">
-                  <span className="ship-meter__fill" style={{ width: `${progress}%` }} />
-                </div>
-              </div>
+                <MeterTrack role="progressbar" aria-valuemin={0} aria-valuemax={FREE_SHIPPING_AT} aria-valuenow={subtotal} aria-label="Progress towards free shipping">
+                  <MeterFill style={{ width: `${progress}%` }} />
+                </MeterTrack>
+              </ShipMeter>
 
-              <ul className="cart-list">
+              <LineList>
                 {cart.items.map((item) => (
                   <CartLine key={item.key} item={item} onChange={(qty) => setQuantity(item.key, qty)} />
                 ))}
-              </ul>
+              </LineList>
 
-              <PromoCode open={promoOpen} onToggle={() => setPromoOpen((value) => !value)} />
+              {/* Totals sit with the items, above the promo field — the pinned
+                  foot carries actions only. */}
+              <DrawerLedger>
+                <Ledger cart={cart} />
+              </DrawerLedger>
+
+              <PromoSection open={promoOpen} onToggle={() => setPromoOpen((value) => !value)} />
             </>
           )}
-        </div>
+        </CartDrawerBody>
 
         {!isEmpty ? (
-          <div className="drawer__foot cart-drawer__foot">
-            <Ledger cart={cart} />
+          <CartDrawerFoot>
+            <DrawerEstimate>
+              <LeadMd $weight={800}>Estimated Total</LeadMd>
+              <LeadMd $weight={800}>
+                {money(Number(cart.totals?.total_price ?? 0), currency)} {currency.currency_code}
+              </LeadMd>
+            </DrawerEstimate>
 
-            <div className="cart-drawer__actions">
-              <Link to="/checkout" className="btn btn--lg btn--block" onClick={close}>
+            <DrawerActions>
+              <Button as={Link} to="/checkout" $block onClick={close}>
                 Checkout
                 <ArrowIcon />
-              </Link>
+              </Button>
 
-              <Link to="/cart" className="btn btn--quiet btn--block" onClick={close}>
+              <Button as={Link} to="/cart" $quiet $block onClick={close}>
                 View bag
-              </Link>
-            </div>
+              </Button>
+            </DrawerActions>
 
-            <div className="assurance cart-drawer__assurance">
+            <DrawerAssurance>
               {ASSURANCE.map((item) => (
                 <span key={item}>{item}</span>
               ))}
-            </div>
-          </div>
+            </DrawerAssurance>
+          </CartDrawerFoot>
         ) : null}
-      </aside>
+      </Drawer>
     </>
   );
 }
 
-function CartLine({ item, onChange }) {
-  const { busy } = useCart();
-  const image = item.images?.[0];
-  const variation = item.variation?.length ? item.variation.map((v) => v.value).join(", ") : "";
-
-  return (
-    <li className="cart-line" data-busy={busy.has(`item:${item.key}`) || undefined}>
-      <Link to={`/product/${item.slug ?? item.id}`} className="cart-line__media" tabIndex={-1} aria-hidden="true">
-        {image ? <img src={image.thumbnail ?? image.src} alt="" loading="lazy" /> : null}
-      </Link>
-
-      <div className="cart-line__info">
-        <div className="cart-line__top">
-          <div className="cart-line__names">
-            <Link to={`/product/${item.slug ?? item.id}`} className="cart-line__name">
-              {item.name}
-            </Link>
-            {variation ? <span className="cart-line__variant">{variation}</span> : null}
-          </div>
-
-          <span className="lead-sm cart-line__price">{money(item.totals?.line_total, item.totals)}</span>
-        </div>
-
-        <div className="cart-line__controls">
-          <QuantityStepper
-            value={item.quantity}
-            onChange={onChange}
-            min={Math.max(1, item.quantity_limits?.minimum ?? 1)}
-            max={item.quantity_limits?.maximum ?? 9999}
-            label={`quantity of ${item.name}`}
-          />
-
-          <RemoveButton itemKey={item.key} name={item.name} />
-        </div>
-      </div>
-    </li>
-  );
-}
-
-function RemoveButton({ itemKey, name }) {
-  const { removeItem, busy } = useCart();
-  const pending = busy.has(`item:${itemKey}`);
-
-  return (
-    <button
-      type="button"
-      className="cart-line__remove"
-      onClick={() => removeItem(itemKey)}
-      disabled={pending}
-      aria-label={name ? `Remove ${name} from bag` : "Remove item from bag"}
-    >
-      <CloseIcon size={14} />
-    </button>
-  );
-}
-
-function PromoCode({ open, onToggle }) {
+function PromoSection({ open, onToggle }) {
   const { cart, applyCoupon, removeCoupon, busy } = useCart();
   const [code, setCode] = useState("");
   const [message, setMessage] = useState("");
@@ -193,108 +184,55 @@ function PromoCode({ open, onToggle }) {
   }
 
   return (
-    <div className="promo">
-      <button type="button" className="promo__toggle" onClick={onToggle} aria-expanded={open}>
-        <span className="sub-xs">Have a promo code?</span>
-        <span className="acc__icon" data-open={open || undefined} aria-hidden="true" />
-      </button>
+    <Promo>
+      <PromoToggle onClick={onToggle} aria-expanded={open}>
+        <SubXs>Have a promo code?</SubXs>
+        <AccIcon $open={open} aria-hidden="true" />
+      </PromoToggle>
 
-      <div className="promo__panel" data-open={open}>
+      <PromoPanel $open={open}>
         <div>
           {cart.coupons?.length ? (
-            <ul className="promo__codes">
+            <PromoCodes>
               {cart.coupons.map((coupon) => (
                 <li key={coupon.code}>
-                  <span className="promo__code">
+                  <PromoCode>
                     <CheckIcon size={12} />
                     {coupon.code}
-                  </span>
-                  <button
-                    type="button"
-                    className="promo__remove"
+                  </PromoCode>
+                  <PromoRemove
                     onClick={() => removeCoupon(coupon.code)}
                     aria-label={`Remove discount code ${coupon.code}`}
                   >
                     <CloseIcon size={12} />
-                  </button>
+                  </PromoRemove>
                 </li>
               ))}
-            </ul>
+            </PromoCodes>
           ) : (
-            <form className="promo__form" onSubmit={submit}>
-              <input
-                className="promo__input"
-                type="text"
+            <PromoForm onSubmit={submit}>
+              <PromoInput
                 value={code}
                 onChange={(event) => setCode(event.target.value)}
                 placeholder="Enter code"
                 aria-label="Discount code"
               />
-              <button type="submit" className="btn" disabled={pending || !code.trim()}>
+              <Button type="submit" disabled={pending || !code.trim()}>
                 {pending ? "Applying…" : "Apply"}
-              </button>
-            </form>
+              </Button>
+            </PromoForm>
           )}
 
           {message ? (
-            <p className="field__error" role="alert">
-              {message}
-            </p>
+            <FieldError role="alert">{message}</FieldError>
           ) : null}
         </div>
-      </div>
-    </div>
+      </PromoPanel>
+    </Promo>
   );
 }
 
-export function Ledger({ cart, showEstimate = false }) {
-  const totals = cart.totals ?? {};
-  const subtotal = Number(totals.total_items ?? 0);
-  const shipping = totals.total_shipping === null || totals.total_shipping === undefined
-    ? null
-    : Number(totals.total_shipping);
-  const discount = Number(totals.total_discount ?? 0);
-  const total = Number(totals.total_price ?? 0);
-
-  const metThreshold = subtotal >= FREE_SHIPPING_AT;
-
-  return (
-    <div className="ledger">
-      <div className="ledger__row">
-        <span>Subtotal</span>
-        <span className="lead-sm">{money(subtotal, totals)}</span>
-      </div>
-
-      {discount > 0 ? (
-        <div className="ledger__row ledger__row--discount">
-          <span>Discount</span>
-          <span>−{money(discount, totals)}</span>
-        </div>
-      ) : null}
-
-      <div className="ledger__row">
-        <span>Shipping</span>
-        <span className="ledger__muted">
-          {shipping === null ? "Calculated at checkout" : metThreshold && shipping === 0 ? "Free" : money(shipping, totals)}
-        </span>
-      </div>
-
-      <div className="ledger__row">
-        <span>Tax</span>
-        <span className="ledger__muted">Calculated at checkout</span>
-      </div>
-
-      {showEstimate ? (
-        <div className="ledger__row ledger__row--total">
-          <span className="lead-md">Estimated Total</span>
-          <span className="lead-md">{money(total, totals)}</span>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function EmptyBag({ onClose }) {
+function EmptyBagBody({ onClose }) {
   const [suggestions, setSuggestions] = useState([]);
 
   useEffect(() => {
@@ -306,24 +244,22 @@ function EmptyBag({ onClose }) {
   }, []);
 
   return (
-    <div className="cart-empty">
+    <EmptyBag>
       <BagIcon size={28} />
-      <p className="sub-sm">Your bag is empty.</p>
+      <SubSm>Your bag is empty.</SubSm>
 
-      <Link to="/shop" className="btn btn--secondary" onClick={onClose}>
+      <Button as={Link} to="/shop" $variant="secondary" onClick={onClose}>
         Shop All
-      </Link>
+      </Button>
 
       {suggestions.length ? (
-        <div className="cart-empty__recs">
-          <p className="sub-xs muted">Best sellers</p>
+        <EmptyRecs>
+          <SubXs $muted>Best sellers</SubXs>
           {suggestions.map((product) => (
             <MiniRow key={product.id} product={product} onNavigate={onClose} />
           ))}
-        </div>
+        </EmptyRecs>
       ) : null}
-    </div>
+    </EmptyBag>
   );
 }
-
-export { FREE_SHIPPING_AT, ASSURANCE };

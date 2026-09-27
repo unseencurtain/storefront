@@ -1,22 +1,23 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../../../features/cart/CartContext.jsx";
 import { useAccount } from "../../account/AccountContext.jsx";
 import { money } from "../../../shared/lib/format.js";
 import { describeGateways } from "../../../shared/lib/gateways.js";
-import { ArrowIcon, CheckIcon, BagIcon } from "../../../shared/ui/Icons.jsx";
+import { ArrowIcon, BagIcon, ChevronIcon } from "../../../shared/ui/Icons.jsx";
 import {
   BodyMd, BodySm, BodyXs, H1, H2, LeadMd, LeadSm, SubSm, SubXs
 } from "../../../shared/ui/primitives.js";
 import {
   AppliedCode, AppliedDetail, AppliedList, AppliedRemove, Assurance, Button,
-  CheckoutGrid, CheckoutMain, CheckoutNav, CheckoutPage, CheckoutTop,
-  CheckLabel, Confirmation, ConfirmationList, ContactSummary, EmptyState, ErrorBanner,
+  CheckoutGrid, CheckoutHeader, CheckoutMain, CheckoutNav, CheckoutPage, CheckoutTop,
+  CheckLabel, Confirmation, ConfirmationList, ContactHead, ContactSummary, EmptyState, ErrorBanner,
   Field, FieldError, FieldLabel, FieldRow, Input, InlineLink, Legal, Ledger,
   LedgerMuted, LedgerRow, Option, OptionBody, OptionDot, OptionList, OptionPrice,
-  Panel, PanelHead, PromoForm, PromoInput, StepButton, StepDot, StepItem, Steps,
-  Select, Summary, SummaryAside, SummaryItem, SummaryItems, SummaryNames,
-  SummaryPrice, SummaryQty, SummaryThumb, TextLink, Textarea, Title, WordmarkSmall
+  Panel, PanelHead, PromoForm, PromoInput, RetryButton, ReturnRow, StepButton, StepItem, Steps,
+  Select, Summary, SummaryAside, SummaryBar, SummaryBarIcon, SummaryBarLabel, SummaryHead, SummaryItem, SummaryItems,
+  SummaryLedger, SummaryNames, SummaryPrice, SummaryQty, SummaryThumb, TextLink,
+  Textarea, WordmarkSmall
 } from "../checkout.css.js";
 
 const STATES_US = [
@@ -61,6 +62,7 @@ export default function Checkout() {
   const {
     cart,
     isEmpty,
+    status: cartStatus,
     setAddress,
     chooseShippingRate,
     applyCoupon,
@@ -80,6 +82,9 @@ export default function Checkout() {
   const [touched, setTouched] = useState({});
   const [promo, setPromo] = useState("");
   const [promoBusy, setPromoBusy] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [addressError, setAddressError] = useState("");
+  const [retrying, setRetrying] = useState(false);
 
   const pending = busy.has("address") || busy.has("checkout");
 
@@ -123,6 +128,33 @@ export default function Checkout() {
     });
   }, [isLoggedIn, customer]);
 
+  // A returning shopper already has an address on file, so the Information step
+  // has nothing to ask them. Push it into the cart, then start on Shipping --
+  // "Change" on the contact card brings them back if they need to edit it.
+  // Guests have no saved address, so they still start on Information.
+  const skippedForSavedAddress = useRef(false);
+
+  useEffect(() => {
+    if (skippedForSavedAddress.current || !isLoggedIn || step !== 0) return;
+
+    const complete =
+      address.first_name && address.address_1 && address.city && address.postcode && address.country;
+    if (!complete) return;
+
+    skippedForSavedAddress.current = true;
+
+    (async () => {
+      const ok = await setAddress(address);
+      if (ok) {
+        setStep(1);
+      } else {
+        // Let them retry rather than stranding them, and say what went wrong.
+        skippedForSavedAddress.current = false;
+        setAddressError("We couldn't load your saved address. Please try again.");
+      }
+    })();
+  }, [address, isLoggedIn, setAddress, step]);
+
   const states = useMemo(
     () => COUNTRIES.find((country) => country.code === address.country)?.states ?? [],
     [address.country]
@@ -143,6 +175,15 @@ export default function Checkout() {
     [cart.shipping_rates]
   );
 
+  /**
+   * Woo returns no shipping packages for a cart of only virtual products --
+   * there is nothing to ship. That is not a failed quote, so the shipping step
+   * must not treat it as "no options available for this address" and disable
+   * Continue, which left virtual-only carts impossible to complete.
+   */
+  const needsShipping = cart.needs_shipping !== false;
+  const shippingSettled = cart.needs_shipping === false || rates.length > 0;
+
   // The cart only exposes gateway ids, so resolve them to displayable options.
   const gateways = useMemo(() => describeGateways(cart.payment_methods ?? []), [cart.payment_methods]);
 
@@ -157,18 +198,39 @@ export default function Checkout() {
     ? payment
     : (gateways[0]?.id ?? "");
 
-  async function goToShipping() {
-    if (invalid) {
-      setTouched(Object.fromEntries(Object.keys(errors).map((key) => [key, true])));
-      return;
-    }
-
-    const result = await setAddress({
+  async function pushAddress() {
+    return setAddress({
       ...address,
       state: address.state || (address.country === "US" ? "TX" : "")
     });
+  }
 
-    if (result) setStep(1);
+  async function goToShipping() {
+    if (invalid) {
+      setTouched(Object.fromEntries(Object.keys(errors).map((key) => [key], true)));
+      return;
+    }
+
+    setAddressError("");
+    const result = await pushAddress();
+
+    if (result) {
+      setStep(1);
+    } else {
+      // The cart never took the address, so there is nothing for Woo to quote
+      // shipping against. Say that, instead of implying the address is
+      // undeliverable and leaving Continue permanently disabled.
+      setAddressError("We couldn't save your address. Please try again.");
+    }
+  }
+
+  /** Re-send the address to force Woo to recalculate the shipping packages. */
+  async function retryRates() {
+    setRetrying(true);
+    setAddressError("");
+    const result = await pushAddress();
+    setRetrying(false);
+    if (!result) setAddressError("We couldn't load shipping options. Please try again.");
   }
 
   async function goToPayment() {
@@ -232,6 +294,10 @@ export default function Checkout() {
 
   if (placed) return <OrderConfirmation receipt={placed} />;
 
+  /* An empty bag is only real once the cart request has settled — otherwise a
+     refresh flashes "Your bag is empty" while the cart is still in flight. */
+  if (cartStatus === "idle" || cartStatus === "loading") return null;
+
   if (isEmpty) {
     return (
       <EmptyState as="main">
@@ -247,62 +313,45 @@ export default function Checkout() {
 
   return (
     <CheckoutPage>
-      <CheckoutGrid>
-        <CheckoutMain>
-          <CheckoutTop>
-            <WordmarkSmall as={Link} to="/" aria-label="Cereve, home">
-              CEREVE
-            </WordmarkSmall>
+      {/* Wordmark and progress sit above the whole layout, so the mobile
+          summary bar can never push them off the top of the page. */}
+      <CheckoutHeader>
+        <CheckoutTop>
+          <WordmarkSmall as={Link} to="/" aria-label="Cereve, home">
+            CEREVE
+          </WordmarkSmall>
+        </CheckoutTop>
 
-            <TextLink as={Link} to="/cart">
-              Back to bag
-            </TextLink>
-          </CheckoutTop>
+        <Steps aria-label="Checkout progress">
+          {STEPS.map((label, index) => {
+            const state = index < step ? "done" : index === step ? "current" : "todo";
 
-          <div>
-            <Title>Checkout</Title>
-            <BodyXs $muted $session>
-              {isLoggedIn ? (
-                <>
-                  Checking out as{" "}
-                  <InlineLink as={Link} to="/account">
-                    {customer.email}
-                  </InlineLink>
-                </>
-              ) : (
-                <>
-                  Checking out as a guest.{" "}
-                  <InlineLink as={Link} to="/login" state={{ from: "/checkout" }}>
-                    Sign in
-                  </InlineLink>{" "}
-                  for faster checkout.
-                </>
-              )}
-            </BodyXs>
-          </div>
-
-          <Steps aria-label="Checkout progress">
-            {STEPS.map((label, index) => {
-              const state = index < step ? "done" : index === step ? "current" : "todo";
-
-              return (
-                <StepItem key={label}>
+            return (
+              <StepItem key={label}>
+                {state === "current" ? (
+                  /* The current step is the page heading, so the step name is
+                     only rendered once instead of twice. */
+                  <StepButton as="h1" $state={state}>
+                    {label}
+                  </StepButton>
+                ) : (
                   <StepButton
                     type="button"
                     $state={state}
                     onClick={() => index < step && setStep(index)}
                     disabled={index > step}
                   >
-                    <StepDot $state={state}>
-                      {index < step ? <CheckIcon size={11} /> : index + 1}
-                    </StepDot>
                     {label}
                   </StepButton>
-                </StepItem>
-              );
-            })}
-          </Steps>
+                )}
+              </StepItem>
+            );
+          })}
+        </Steps>
+      </CheckoutHeader>
 
+      <CheckoutGrid>
+        <CheckoutMain>
           {error ? (
             <ErrorBanner role="alert">{error}</ErrorBanner>
           ) : null}
@@ -310,7 +359,19 @@ export default function Checkout() {
           <form onSubmit={submit} noValidate>
             {/* ---- Information ---- */}
             <Panel hidden={step !== 0}>
-              <PanelHead>Contact</PanelHead>
+              <ContactHead>
+                <PanelHead>Contact</PanelHead>
+
+                {isLoggedIn ? (
+                  <TextLink as={Link} to="/account">
+                    {customer.email}
+                  </TextLink>
+                ) : (
+                  <TextLink as={Link} to="/login" state={{ from: "/checkout" }}>
+                    Sign in
+                  </TextLink>
+                )}
+              </ContactHead>
 
               <CheckoutField
                 name="email"
@@ -435,13 +496,24 @@ export default function Checkout() {
                 {pending ? "Saving…" : "Continue to shipping"}
                 <ArrowIcon />
               </Button>
+
+              {/* Leaving the bag belongs with the primary action at the end of
+                  the form, not above the form where the summary sits. */}
+              <ReturnRow>
+                <TextLink as={Link} to="/cart">
+                  <ArrowIcon size={12} direction="left" />
+                  Return to bag
+                </TextLink>
+              </ReturnRow>
             </Panel>
 
             {/* ---- Shipping ---- */}
             <Panel hidden={step !== 1}>
               <PanelHead>Shipping method</PanelHead>
 
-              <ContactCard address={address} onEdit={() => setStep(0)} />
+              {needsShipping ? (
+                <ContactCard address={address} onEdit={() => setStep(0)} />
+              ) : null}
 
               {rates.length ? (
                 <OptionList>
@@ -479,15 +551,26 @@ export default function Checkout() {
                     );
                   })}
                 </OptionList>
+              ) : needsShipping ? (
+                <FieldError role="alert">
+                  {addressError ||
+                    "No shipping options are available for this address. We only ship within the United States."}
+                  <RetryButton type="button" onClick={retryRates} disabled={retrying} $quiet>
+                    {retrying ? "Retrying…" : "Try again"}
+                  </RetryButton>
+                </FieldError>
               ) : (
-                <BodySm $muted>No shipping options are available for this address.</BodySm>
+                <BodySm $muted>
+                  These items are virtual, so there is nothing to ship. Delivery details will be emailed to
+                  you.
+                </BodySm>
               )}
 
               <CheckoutNav>
                 <Button $quiet onClick={() => setStep(0)}>
                   Back
                 </Button>
-                <Button onClick={goToPayment} disabled={pending || !rates.length}>
+                <Button onClick={goToPayment} disabled={pending || !shippingSettled}>
                   Continue to payment
                   <ArrowIcon />
                 </Button>
@@ -565,7 +648,24 @@ export default function Checkout() {
 
         {/* ---- Order summary ---- */}
         <SummaryAside aria-label="Order summary">
+          <SummaryBar
+            onClick={() => setSummaryOpen((value) => !value)}
+            aria-expanded={summaryOpen}
+            aria-controls="checkout-summary"
+          >
+            <SummaryBarLabel>
+              <span>Order summary</span>
+              <SummaryBarIcon>
+                <ChevronIcon size={12} direction={summaryOpen ? "up" : "down"} />
+              </SummaryBarIcon>
+            </SummaryBarLabel>
+
+            <span>{summaryTotalLabel(cart)}</span>
+          </SummaryBar>
+
           <SummaryRail
+            id="checkout-summary"
+            open={summaryOpen}
             cart={cart}
             promo={promo}
             onPromo={setPromo}
@@ -583,7 +683,12 @@ export default function Checkout() {
  * Summary rail
  * ------------------------------------------------------------------ */
 
-function SummaryRail({ cart, promo, onPromo, onApplyPromo, onRemoveCoupon, promoBusy }) {
+function summaryTotalLabel(cart) {
+  const totals = cart.totals ?? {};
+  return money(Number(totals.total_price ?? 0), totals);
+}
+
+function SummaryRail({ id, open, cart, promo, onPromo, onApplyPromo, onRemoveCoupon, promoBusy }) {
   const totals = cart.totals ?? {};
   const subtotal = Number(totals.total_items ?? 0);
   const shipping = totals.total_shipping == null ? null : Number(totals.total_shipping);
@@ -591,8 +696,8 @@ function SummaryRail({ cart, promo, onPromo, onApplyPromo, onRemoveCoupon, promo
   const coupons = cart.coupons ?? [];
 
   return (
-    <Summary>
-      <SubSm>Order summary</SubSm>
+    <Summary id={id} $open={open}>
+      <SummaryHead>Order summary</SummaryHead>
 
       <SummaryItems>
         {cart.items.map((item) => (
@@ -649,26 +754,28 @@ function SummaryRail({ cart, promo, onPromo, onApplyPromo, onRemoveCoupon, promo
         </AppliedList>
       ) : null}
 
-      <Ledger>
-        <LedgerRow>
-          <span>Subtotal</span>
-          <LeadSm>{money(subtotal, totals)}</LeadSm>
-        </LedgerRow>
+      <SummaryLedger>
+        <Ledger>
+          <LedgerRow>
+            <span>Subtotal</span>
+            <LeadSm>{money(subtotal, totals)}</LeadSm>
+          </LedgerRow>
 
-        <LedgerRow>
-          <span>Shipping</span>
-          <LedgerMuted>
-            {shipping === null ? "Calculated at next step" : Number(shipping) === 0 ? "Free" : money(shipping, totals)}
-          </LedgerMuted>
-        </LedgerRow>
+          <LedgerRow>
+            <span>Shipping</span>
+            <LedgerMuted>
+              {shipping === null ? "Calculated at next step" : Number(shipping) === 0 ? "Free" : money(shipping, totals)}
+            </LedgerMuted>
+          </LedgerRow>
 
-        <LedgerRow $total>
-          <LeadMd>Total</LeadMd>
-          <LeadMd>
-            {money(total, totals)} <BodyXs $muted as="small">{totals.currency_code}</BodyXs>
-          </LeadMd>
-        </LedgerRow>
-      </Ledger>
+          <LedgerRow $total>
+            <LeadMd>Total</LeadMd>
+            <LeadMd>
+              {money(total, totals)} <BodyXs $muted as="small">{totals.currency_code}</BodyXs>
+            </LeadMd>
+          </LedgerRow>
+        </Ledger>
+      </SummaryLedger>
 
       <Assurance>
         <span>Secure checkout</span>
@@ -760,6 +867,9 @@ function CheckoutField({
   ...rest
 }) {
   const invalid = Boolean(error);
+  // The label stays as a real <label> for assistive tech, but the visible text
+  // lives inside the control as its placeholder, the way the reference does.
+  const placeholder = rest.placeholder ?? label;
 
   return (
     <Field>
@@ -777,7 +887,7 @@ function CheckoutField({
           aria-invalid={invalid}
           {...rest}
         >
-          <option value="">Select…</option>
+          <option value="">{label}</option>
           {options.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
@@ -789,6 +899,7 @@ function CheckoutField({
           id={`co-${name}`}
           name={name}
           value={value}
+          placeholder={placeholder}
           onChange={(event) => onChange({ [name]: event.target.value })}
           aria-invalid={invalid}
           {...rest}
@@ -799,6 +910,7 @@ function CheckoutField({
           name={name}
           type={type}
           value={value}
+          placeholder={placeholder}
           onChange={(event) => onChange({ [name]: event.target.value })}
           aria-invalid={invalid}
           aria-describedby={invalid ? `${name}-error` : undefined}

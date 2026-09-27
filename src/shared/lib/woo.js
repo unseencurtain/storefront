@@ -11,6 +11,8 @@
  * talk to the relative `/woo-api` prefix rather than an absolute host.
  */
 
+import { decodeEntities } from "./format.js";
+
 const STORE = "/woo-api";
 const WP = "/wp-api";
 
@@ -66,7 +68,31 @@ function absorbHeaders(res) {
   if (freshNonce) nonce = freshNonce;
 }
 
+let priming = null;
+
+/**
+ * Woo rejects every cart mutation that arrives without a valid Nonce, and the
+ * nonce only ever arrives on a response. A cold session had none, so the first
+ * add-to-bag raced the cart read and came back 401. That left the cart without
+ * an address, so the shipping calculator matched no zone and checkout reported
+ * "No shipping options are available for this address" no matter what address
+ * was entered. Read the cart once to obtain a nonce before mutating.
+ */
+function primeNonce() {
+  if (nonce) return Promise.resolve();
+  if (!priming) {
+    priming = request("/cart")
+      .catch(() => null)
+      .finally(() => {
+        priming = null;
+      });
+  }
+  return priming;
+}
+
 async function request(path, { method = "GET", body, withCart = false, base = STORE } = {}) {
+  if (withCart && method !== "GET") await primeNonce();
+
   let res;
 
   try {
@@ -254,6 +280,22 @@ function withPriceParts(product) {
 
   return {
     ...product,
+    name: decodeEntities(product.name),
+    sku: decodeEntities(product.sku),
+    // short_description stays raw: it is an HTML body, and decodeEntities is
+    // only safe on plain text. The PDP renders it through the HTML sanitizer.
+    categories: (product.categories ?? []).map((category) => ({
+      ...category,
+      name: decodeEntities(category.name)
+    })),
+    attributes: (product.attributes ?? []).map((attribute) => ({
+      ...attribute,
+      name: decodeEntities(attribute.name),
+      terms: (attribute.terms ?? []).map((term) => ({
+        ...term,
+        name: decodeEntities(term.name)
+      }))
+    })),
     image: product.images?.[0] ?? null,
     hoverImage: product.images?.[1] ?? null,
     priceParts: {
@@ -261,6 +303,23 @@ function withPriceParts(product) {
       sale: parts?.sale ?? null,
       current: parts?.current ?? formatMinor(meta.price, meta)
     }
+  };
+}
+
+/** Cart lines carry the same escaped strings as the catalogue. */
+function withDecodedItems(cart) {
+  if (!cart?.items?.length) return cart;
+
+  return {
+    ...cart,
+    items: cart.items.map((item) => ({
+      ...item,
+      name: decodeEntities(item.name),
+      variation: (item.variation ?? []).map((entry) => ({
+        ...entry,
+        value: decodeEntities(entry.value)
+      }))
+    }))
   };
 }
 
@@ -343,15 +402,17 @@ export async function getProductTags({ perPage = 100 } = {}) {
  * ------------------------------------------------------------------ */
 
 export async function getCart() {
-  return request(`/cart`, { withCart: true });
+  return withDecodedItems(await request(`/cart`, { withCart: true }));
 }
 
 export async function addToCart({ id, quantity = 1, variationId }) {
-  return request(`/cart/items`, {
-    method: "POST",
-    withCart: true,
-    body: { id, quantity, variation_id: variationId }
-  });
+  return withDecodedItems(
+    await request(`/cart/items`, {
+      method: "POST",
+      withCart: true,
+      body: { id, quantity, variation_id: variationId }
+    })
+  );
 }
 
 export async function updateCartItem(key, { quantity, variationId }) {
@@ -480,4 +541,8 @@ export async function getCustomerOrders({ perPage = 20, page = 1 } = {}) {
     total: Number(data?.total) || 0,
     page: Number(data?.page) || 1
   };
+}
+
+export async function getCustomerOrder(id) {
+  return customer(`/orders/${encodeURIComponent(id)}`);
 }
