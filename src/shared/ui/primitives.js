@@ -633,6 +633,11 @@ export const IconButton = styled.button`
   color: ${({ theme: t }) => t.color.cocoa};
   transition: background-color ${({ theme: t }) => `${t.motion.fast} ${t.motion.ease}`};
 
+  @media (max-width: 767px) {
+    width: 36px;
+    height: 40px;
+  }
+
   &:hover {
     background: ${({ theme: t }) => t.color.springWood};
     border-radius: 50%;

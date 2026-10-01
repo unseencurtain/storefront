@@ -1569,6 +1569,20 @@ button.filters__close {
 }
 
 @media (max-width: 767px) {
+  .pdp__layout--details {
+    padding-top: 16px;
+    row-gap: 24px;
+  }
+
+  .pdp__heading {
+    gap: 14px;
+  }
+
+  .pdp__title {
+    line-height: 1.08;
+    overflow-wrap: anywhere;
+  }
+
   .pdp .crumbs {
     display: none;
   }

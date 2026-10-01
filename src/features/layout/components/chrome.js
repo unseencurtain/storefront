@@ -300,6 +300,11 @@ export const TopBar = styled(Container)`
   align-items: center;
   gap: 16px;
   padding-block: 12px;
+
+  @media (max-width: 767px) {
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    gap: 8px;
+  }
 `;
 
 export const TopBarSide = styled.div`
@@ -333,6 +338,11 @@ export const Wordmark = styled.a`
   text-transform: uppercase;
   color: ${({ theme: t }) => t.color.cocoa};
   white-space: nowrap;
+
+  @media (max-width: 767px) {
+    font-size: 20px;
+    letter-spacing: 3px;
+  }
 `;
 
 export const TopBarUtils = styled.div`
@@ -340,6 +350,10 @@ export const TopBarUtils = styled.div`
   align-items: center;
   gap: 2px;
   justify-self: end;
+
+  @media (max-width: 767px) {
+    gap: 0;
+  }
 `;
 
 export const CartButton = styled.button`
