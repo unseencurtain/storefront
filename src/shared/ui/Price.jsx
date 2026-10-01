@@ -35,6 +35,10 @@ const Off = styled.span`
   color: ${({ theme: t }) => t.color.rust};
 `;
 
+const RatingText = styled(BodySm)`
+  ${Muted};
+`;
+
 const amountFor = (size) =>
   size === "lg" ? LeadLg : size === "sm" ? BodySm : LeadSm;
 
@@ -106,12 +110,10 @@ export function Stars({ rating = 0, count, size = 13, className = "" }) {
       </StarsRow>
 
       {count ? (
-        <BodySm as="span" $light>
-          <Muted>
-            {value} <SrOnly>out of 5 stars,</SrOnly> {count}{" "}
-            {count === 1 ? "Review" : "Reviews"}
-          </Muted>
-        </BodySm>
+        <RatingText as="span" $light>
+          {value} <SrOnly>out of 5 stars,</SrOnly> {count}{" "}
+          {count === 1 ? "Review" : "Reviews"}
+        </RatingText>
       ) : (
         <SrOnly>{value} out of 5 stars</SrOnly>
       )}

@@ -4,6 +4,7 @@ import { useCart } from "../../../features/cart/CartContext.jsx";
 import { useAccount } from "../../account/AccountContext.jsx";
 import { STORE_NAME } from "../../../shared/lib/branding.js";
 import { describeGateways } from "../../../shared/lib/gateways.js";
+import { getCatalogMetadata } from "../../../shared/lib/woo.js";
 import { ArrowIcon, BagIcon, ChevronIcon } from "../../../shared/ui/Icons.jsx";
 import {
   BodyMd, BodySm, BodyXs, H1, H2, LeadMd, LeadSm, SubSm, SubXs
@@ -91,6 +92,9 @@ export default function Checkout() {
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [addressError, setAddressError] = useState("");
   const [retrying, setRetrying] = useState(false);
+  const [catalogMeta, setCatalogMeta] = useState({ products: {}, countries: {} });
+  const [catalogMetaLoading, setCatalogMetaLoading] = useState(false);
+  const [catalogMetaError, setCatalogMetaError] = useState(false);
 
   const pending = busy.has("address") || busy.has("checkout");
 
@@ -114,6 +118,36 @@ export default function Checkout() {
   // A signed-in shopper should not retype what we already hold. Only blank
   // fields are filled, so anything the cart or the shopper typed still wins.
   const { customer, isLoggedIn } = useAccount();
+
+  const cartProductIds = useMemo(
+    () => [...new Set((cart.items ?? []).map((item) => Number(item.id)).filter((id) => id > 0))],
+    [cart.items]
+  );
+
+  useEffect(() => {
+    let alive = true;
+    if (!cartProductIds.length) {
+      setCatalogMeta({ products: {}, countries: {} });
+      setCatalogMetaLoading(false);
+      setCatalogMetaError(false);
+      return () => { alive = false; };
+    }
+    setCatalogMetaLoading(true);
+    getCatalogMetadata(cartProductIds)
+      .then((data) => {
+        if (!alive) return;
+        setCatalogMeta(data);
+        setCatalogMetaLoading(false);
+        setCatalogMetaError(false);
+      })
+      .catch(() => {
+        if (!alive) return;
+        setCatalogMeta({ products: {}, countries: {} });
+        setCatalogMetaLoading(false);
+        setCatalogMetaError(true);
+      });
+    return () => { alive = false; };
+  }, [cartProductIds]);
 
   useEffect(() => {
     if (!isLoggedIn) return;
@@ -165,6 +199,31 @@ export default function Checkout() {
     () => COUNTRIES.find((country) => country.code === address.country)?.states ?? [],
     [address.country]
   );
+
+  const supplierProducts = cartProductIds
+    .map((id) => catalogMeta.products[String(id)])
+    .filter(Boolean);
+  const suppliers = [...new Set(supplierProducts.map((product) => product.vendor))];
+  const mixedSuppliers = suppliers.length > 1;
+  const unrecognizedCartProducts = !catalogMetaLoading && !catalogMetaError && cartProductIds.some((id) => !catalogMeta.products[String(id)]);
+  const supplierNames = { beautyfort: "BeautyFort", bts: "BTS Wholesaler" };
+  const supplierName = suppliers.length === 1 ? (supplierNames[suppliers[0]] ?? suppliers[0]) : "";
+  const supplierCountries = supplierProducts.find((product) => product.countries?.length)?.countries ?? [];
+  const countryDirectory = Object.keys(catalogMeta.countries ?? {}).length
+    ? Object.entries(catalogMeta.countries).map(([code, name]) => ({
+        code,
+        name,
+        states: COUNTRIES.find((country) => country.code === code)?.states ?? []
+      }))
+    : COUNTRIES;
+  const availableCountries = supplierCountries.length
+    ? countryDirectory.filter((country) => supplierCountries.includes(country.code))
+    : countryDirectory;
+
+  useEffect(() => {
+    if (!supplierCountries.length || !address.country) return;
+    if (!supplierCountries.includes(address.country)) updateAddress({ country: "" });
+  }, [supplierCountries.join(","), address.country]);
 
   const errors = useMemo(() => validate(address, step === 2), [address, step]);
   const invalid = Object.keys(errors).length > 0;
@@ -466,13 +525,10 @@ export default function Checkout() {
               </FieldRow>
 
               <FieldRow>
-                <CheckoutField
-                  name="country"
-                  label="Country / Region"
-                  select
+                <CountryField
                   value={address.country}
-                  onChange={updateAddress}
-                  options={COUNTRIES.map((country) => ({ value: country.code, label: country.name }))}
+                  countries={availableCountries}
+                  onChange={(country) => updateAddress({ country })}
                   required
                 />
 
@@ -489,6 +545,20 @@ export default function Checkout() {
                 ) : null}
               </FieldRow>
 
+              {unrecognizedCartProducts ? (
+                <ErrorBanner role="alert">
+                  One or more items in your bag are not available through the active suppliers. Remove those items before continuing.
+                </ErrorBanner>
+              ) : mixedSuppliers ? (
+                <ErrorBanner role="alert">
+                  BeautyFort and BTS Wholesaler orders ship separately. Remove products from one supplier before continuing.
+                </ErrorBanner>
+              ) : supplierName && supplierCountries.length ? (
+                <p className="body-xs muted" role="status">
+                  This order ships from {supplierName}. Available delivery countries are limited to this supplier’s destinations.
+                </p>
+              ) : null}
+
               <CheckoutField
                 name="phone"
                 label="Phone (optional)"
@@ -498,7 +568,7 @@ export default function Checkout() {
                 autoComplete="tel"
               />
 
-              <Button $block onClick={goToShipping} disabled={pending}>
+              <Button $block onClick={goToShipping} disabled={pending || catalogMetaLoading || mixedSuppliers || unrecognizedCartProducts}>
                 {pending ? "Saving…" : "Continue to shipping"}
                 <ArrowIcon />
               </Button>
@@ -929,6 +999,53 @@ function CheckoutField({
           {error}
         </FieldError>
       ) : null}
+    </Field>
+  );
+}
+
+function CountryField({ value, countries, onChange, required }) {
+  const selected = countries.find((country) => country.code === value);
+  const [query, setQuery] = useState(selected?.name ?? "");
+
+  useEffect(() => {
+    setQuery(selected?.name ?? "");
+  }, [selected?.name]);
+
+  function update(value) {
+    setQuery(value);
+    const match = countries.find(
+      (country) => country.name.toLowerCase() === value.trim().toLowerCase() || country.code.toLowerCase() === value.trim().toLowerCase()
+    );
+    onChange(match?.code ?? "");
+  }
+
+  return (
+    <Field>
+      <FieldLabel as="label" htmlFor="co-country">
+        Country / Region{required ? <span> *</span> : null}
+      </FieldLabel>
+      <Input
+        id="co-country"
+        name="country"
+        type="search"
+        list="checkout-country-options"
+        value={query}
+        placeholder="Search countries"
+        autoComplete="country-name"
+        onChange={(event) => update(event.target.value)}
+        onBlur={() => {
+          if (!countries.some((country) => country.name.toLowerCase() === query.trim().toLowerCase())) {
+            setQuery(selected?.name ?? "");
+            onChange("");
+          }
+        }}
+        required={required}
+      />
+      <datalist id="checkout-country-options">
+        {countries.map((country) => (
+          <option key={country.code} value={country.name} label={country.code} />
+        ))}
+      </datalist>
     </Field>
   );
 }

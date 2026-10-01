@@ -606,6 +606,11 @@ button.filters__close {
   padding-bottom: 32px;
 }
 
+.brand-letters .filters__link {
+  width: auto;
+  justify-content: center;
+}
+
 .brand-group {
   padding-bottom: 32px;
 }

@@ -205,6 +205,7 @@ const LIST_FIELDS = [
   "categories",
   "brands",
   "attributes",
+  "stock_availability",
   "prices",
   "price_html",
   "average_rating",
@@ -306,6 +307,7 @@ export async function getProducts({
   }, extras)}`;
 
   const res = await fetch(`${STORE}${path}`, {
+    cache: "no-store",
     headers: { Accept: "application/json" }
   });
 
@@ -392,7 +394,13 @@ export async function getProductBySlug(slug) {
 
 /** Fetch the full detail payload for a product id. */
 export async function getProduct(id) {
-  const product = await request(`/products/${id}${query({ _fields: PRODUCT_FIELDS })}`);
+  const [product, catalogMeta] = await Promise.all([
+    request(`/products/${id}${query({ _fields: PRODUCT_FIELDS })}`),
+    getCatalogMetadata([id])
+  ]);
+  if (!catalogMeta.products?.[String(id)]) {
+    throw new WooError("Product not found", { status: 404 });
+  }
   const enriched = withPriceParts(product);
 
   return {
@@ -408,6 +416,13 @@ export async function getProduct(id) {
 export async function getProductEan(id) {
   const result = await request(`/cereve/v1/products/${encodeURIComponent(id)}/ean`, { base: WP });
   return typeof result?.ean === "string" ? result.ean : "";
+}
+
+/** Read supplier shipping metadata and WooCommerce's country directory in one request. */
+export async function getCatalogMetadata(ids = []) {
+  const uniqueIds = [...new Set(ids.map(Number).filter((id) => Number.isInteger(id) && id > 0))];
+  if (!uniqueIds.length) return { products: {}, countries: {} };
+  return request(`/products/catalog-meta${query({ ids: uniqueIds.slice(0, 100).join(",") })}`, { base: WP });
 }
 
 /** Resolve an exact EAN through WooCommerce's indexed global-unique-ID lookup. */
