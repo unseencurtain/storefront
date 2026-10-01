@@ -13,6 +13,7 @@ import {
 import {
   AppliedCode, AppliedDetail, AppliedList, AppliedRemove, Assurance, Button,
   CheckoutGrid, CheckoutHeader, CheckoutMain, CheckoutNav, CheckoutPage, CheckoutTop,
+  CountryCode, CountryOption, CountryOptions,
   CheckLabel, Confirmation, ConfirmationList, ContactHead, ContactSummary, EmptyState, ErrorBanner,
   Field, FieldError, FieldLabel, FieldRow, Input, InlineLink, Legal, Ledger,
   LedgerMuted, LedgerRow, Option, OptionBody, OptionDot, OptionList, OptionPrice,
@@ -1007,6 +1008,15 @@ function CheckoutField({
 function CountryField({ value, countries, onChange, required }) {
   const selected = countries.find((country) => country.code === value);
   const [query, setQuery] = useState(selected?.name ?? "");
+  const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const rootRef = useRef(null);
+  const filtered = useMemo(() => {
+    const needle = query.trim().toLocaleLowerCase();
+    return countries.filter((country) =>
+      !needle || country.name.toLocaleLowerCase().includes(needle) || country.code.toLocaleLowerCase().includes(needle)
+    );
+  }, [countries, query]);
 
   useEffect(() => {
     setQuery(selected?.name ?? "");
@@ -1014,39 +1024,85 @@ function CountryField({ value, countries, onChange, required }) {
 
   function update(value) {
     setQuery(value);
+    setOpen(true);
+    setActiveIndex(0);
     const match = countries.find(
       (country) => country.name.toLowerCase() === value.trim().toLowerCase() || country.code.toLowerCase() === value.trim().toLowerCase()
     );
     onChange(match?.code ?? "");
   }
 
+  function choose(country) {
+    setQuery(country.name);
+    onChange(country.code);
+    setOpen(false);
+  }
+
+  function handleKeyDown(event) {
+    if (event.key === "Escape") {
+      setOpen(false);
+      setQuery(selected?.name ?? "");
+      return;
+    }
+    if (event.key === "ArrowDown" && filtered.length) {
+      event.preventDefault();
+      setOpen(true);
+      setActiveIndex((index) => Math.min(index + 1, filtered.length - 1));
+    } else if (event.key === "ArrowUp" && filtered.length) {
+      event.preventDefault();
+      setActiveIndex((index) => Math.max(index - 1, 0));
+    } else if (event.key === "Enter" && open && filtered.length) {
+      event.preventDefault();
+      choose(filtered[activeIndex] ?? filtered[0]);
+    }
+  }
+
   return (
-    <Field>
+    <Field ref={rootRef} onBlur={(event) => {
+      if (!event.currentTarget.contains(event.relatedTarget)) {
+        setOpen(false);
+        if (!countries.some((country) => country.name.toLowerCase() === query.trim().toLowerCase())) {
+          setQuery(selected?.name ?? "");
+          onChange("");
+        }
+      }
+    }}>
       <FieldLabel as="label" htmlFor="co-country">
         Country / Region{required ? <span> *</span> : null}
       </FieldLabel>
       <Input
         id="co-country"
         name="country"
-        type="search"
-        list="checkout-country-options"
+        type="text"
+        role="combobox"
+        aria-autocomplete="list"
+        aria-expanded={open}
+        aria-controls="checkout-country-options"
+        autoComplete="off"
         value={query}
         placeholder="Search countries"
-        autoComplete="country-name"
+        onFocus={() => setOpen(true)}
         onChange={(event) => update(event.target.value)}
-        onBlur={() => {
-          if (!countries.some((country) => country.name.toLowerCase() === query.trim().toLowerCase())) {
-            setQuery(selected?.name ?? "");
-            onChange("");
-          }
-        }}
+        onKeyDown={handleKeyDown}
         required={required}
       />
-      <datalist id="checkout-country-options">
-        {countries.map((country) => (
-          <option key={country.code} value={country.name} label={country.code} />
-        ))}
-      </datalist>
+      {open && (
+        <CountryOptions id="checkout-country-options" role="listbox">
+          {filtered.length ? filtered.map((country, index) => (
+            <CountryOption
+              key={country.code}
+              type="button"
+              role="option"
+              aria-selected={country.code === value}
+              $active={index === activeIndex}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => choose(country)}
+            >
+              {country.name}<CountryCode>{country.code}</CountryCode>
+            </CountryOption>
+          )) : <BodySm style={{ padding: "10px 11px", margin: 0 }}>No matching countries</BodySm>}
+        </CountryOptions>
+      )}
     </Field>
   );
 }
