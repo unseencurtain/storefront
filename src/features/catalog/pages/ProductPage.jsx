@@ -218,7 +218,15 @@ export default function ProductPage() {
           <span aria-current="page">{product.name}</span>
         </nav>
 
-        <div className="pdp__layout">
+        <div className="pdp__layout pdp__layout--details">
+          <header className="pdp__heading">
+            <h1 className="hdr-sm pdp__title">{product.name}</h1>
+            <div className="pdp__meta">
+              <Price product={activePrice} size="lg" />
+              {product.review_count ? <Stars rating={product.average_rating} count={product.review_count} /> : null}
+            </div>
+          </header>
+
           <section className="pdp__gallery" aria-label="Product images">
             <div className="pdp__stage">
               {gallery[activeImage] ? (
@@ -257,13 +265,6 @@ export default function ProductPage() {
           </section>
 
           <section className="pdp__info">
-            <h1 className="hdr-sm pdp__title">{product.name}</h1>
-
-            <div className="pdp__meta">
-              <Price product={activePrice} size="lg" />
-              {product.review_count ? <Stars rating={product.average_rating} count={product.review_count} /> : null}
-            </div>
-
             {product.shortDescriptionHtml ? (
               <div
                 className="pdp__short body-sm"

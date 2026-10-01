@@ -4,6 +4,7 @@ import { useCart } from "../../../features/cart/CartContext.jsx";
 import { useAccount } from "../../account/AccountContext.jsx";
 import { STORE_NAME } from "../../../shared/lib/branding.js";
 import { describeGateways } from "../../../shared/lib/gateways.js";
+import { money } from "../../../shared/lib/format.js";
 import { getCatalogMetadata } from "../../../shared/lib/woo.js";
 import { ArrowIcon, BagIcon, ChevronIcon } from "../../../shared/ui/Icons.jsx";
 import {

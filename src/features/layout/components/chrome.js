@@ -227,6 +227,16 @@ export const SearchPanel = styled.div`
     opacity ${({ theme: t }) => `${t.motion.base} ${t.motion.ease}`},
     transform ${({ theme: t }) => `${t.motion.base} ${t.motion.ease}`},
     visibility ${({ theme: t }) => t.motion.base};
+
+  @media (max-width: 1023px) {
+    z-index: 80;
+    inset: 0;
+    max-height: none;
+    transform: none;
+    transition:
+      opacity 180ms ease,
+      visibility 180ms;
+  }
 `;
 
 export const SearchInner = styled.div`

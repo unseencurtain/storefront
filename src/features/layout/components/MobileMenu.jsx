@@ -92,7 +92,6 @@ export default function MobileMenu({ onOpenSearch, onOpenCart }) {
           <MenuSearch
             type="button"
             onClick={() => {
-              close();
               onOpenSearch();
             }}
           >
