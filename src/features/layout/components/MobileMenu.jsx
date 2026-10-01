@@ -31,6 +31,7 @@ import {
   MenuSocialLink
 } from "./chrome.js";
 import { AccordionIcon } from "../../../shared/ui/primitives.js";
+import { STORE_NAME } from "../../../shared/lib/branding.js";
 import { SOCIALS } from "./Footer.jsx";
 
 /**
@@ -79,7 +80,7 @@ export default function MobileMenu({ onOpenSearch, onOpenCart }) {
       >
         <DrawerHead>
           <Wordmark as={Link} to="/" $small onClick={close}>
-            CEREVE
+            {STORE_NAME}
           </Wordmark>
 
           <IconButton type="button" onClick={close} aria-label="Close menu">
@@ -101,6 +102,8 @@ export default function MobileMenu({ onOpenSearch, onOpenCart }) {
 
           <MenuNav aria-label="Mobile">
             <NavRow label="Shop All" to="/shop" onNavigate={close} strong />
+            <NavRow label="Brands" to="/brands" onNavigate={close} strong />
+            <NavRow label="Sale" to="/shop?on_sale=1" onNavigate={close} />
 
             {roots.map((category) => (
               <div key={category.id}>

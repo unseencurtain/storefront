@@ -35,7 +35,7 @@ import {
 } from "../../layout/components/chrome.js";
 
 const RESULT_LIMIT = 4;
-const SUGGESTION_POOL = ["shirt", "shoes", "hoodie", "jacket", "sunglasses", "sweater"];
+const SUGGESTION_POOL = ["mascara", "serum", "perfume", "shampoo", "sunscreen", "retinol"];
 
 /**
  * Predictive search panel.

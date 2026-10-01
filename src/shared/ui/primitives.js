@@ -712,14 +712,6 @@ export const NoImage = styled.span`
   padding: 12%;
   text-align: center;
   background: ${({ theme: t }) => t.color.springWood};
-
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 8%;
-    border: 1px solid ${({ theme: t }) => t.color.grey300};
-    pointer-events: none;
-  }
 `;
 
 export const NoImageMark = styled.span`

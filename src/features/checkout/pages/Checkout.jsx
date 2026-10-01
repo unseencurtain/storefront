@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../../../features/cart/CartContext.jsx";
 import { useAccount } from "../../account/AccountContext.jsx";
-import { money } from "../../../shared/lib/format.js";
+import { STORE_NAME } from "../../../shared/lib/branding.js";
 import { describeGateways } from "../../../shared/lib/gateways.js";
 import { ArrowIcon, BagIcon, ChevronIcon } from "../../../shared/ui/Icons.jsx";
 import {
@@ -27,12 +27,18 @@ const STATES_US = [
 ];
 
 const COUNTRIES = [
-  { code: "US", name: "United States", states: STATES_US },
-  { code: "CA", name: "Canada", states: [] },
-  { code: "GB", name: "United Kingdom", states: [] },
-  { code: "AU", name: "Australia", states: [] },
   { code: "DE", name: "Germany", states: [] },
-  { code: "FR", name: "France", states: [] }
+  { code: "FR", name: "France", states: [] },
+  { code: "ES", name: "Spain", states: [] },
+  { code: "IT", name: "Italy", states: [] },
+  { code: "NL", name: "Netherlands", states: [] },
+  { code: "BE", name: "Belgium", states: [] },
+  { code: "AT", name: "Austria", states: [] },
+  { code: "PT", name: "Portugal", states: [] },
+  { code: "IE", name: "Ireland", states: [] },
+  { code: "PL", name: "Poland", states: [] },
+  { code: "GB", name: "United Kingdom", states: [] },
+  { code: "US", name: "United States", states: STATES_US }
 ];
 
 const STEPS = ["Information", "Shipping", "Payment"];
@@ -46,7 +52,7 @@ const EMPTY_ADDRESS = {
   city: "",
   state: "",
   postcode: "",
-  country: "US",
+  country: "DE",
   phone: "",
   email: ""
 };
@@ -317,8 +323,8 @@ export default function Checkout() {
           summary bar can never push them off the top of the page. */}
       <CheckoutHeader>
         <CheckoutTop>
-          <WordmarkSmall as={Link} to="/" aria-label="Cereve, home">
-            CEREVE
+          <WordmarkSmall as={Link} to="/" aria-label={`${STORE_NAME}, home`}>
+            {STORE_NAME}
           </WordmarkSmall>
         </CheckoutTop>
 
@@ -554,7 +560,7 @@ export default function Checkout() {
               ) : needsShipping ? (
                 <FieldError role="alert">
                   {addressError ||
-                    "No shipping options are available for this address. We only ship within the United States."}
+                    "No shipping options are available for this address. Check the country and postcode, or try another destination."}
                   <RetryButton type="button" onClick={retryRates} disabled={retrying} $quiet>
                     {retrying ? "Retrying…" : "Try again"}
                   </RetryButton>

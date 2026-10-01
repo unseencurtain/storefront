@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import styled, { css } from "styled-components";
 import { useCart } from "../../cart/CartContext.jsx";
+import { STORE_NAME } from "../../../shared/lib/branding.js";
 import { Price } from "../../../shared/ui/Price.jsx";
 import {
   Badge,
@@ -37,6 +38,7 @@ const MediaWrap = styled.div`
 const Img = styled.img`
   position: absolute;
   inset: 0;
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -44,7 +46,7 @@ const Img = styled.img`
 `;
 
 const Primary = styled(Img)`
-  opacity: ${({ $crossfade }) => ($crossfade ? 0 : 1)};
+  opacity: 1;
 `;
 
 const Secondary = styled(Img)`
@@ -131,6 +133,11 @@ const CardPrice = styled(Price)`
   color: ${({ theme: t }) => t.color.cocoa};
 `;
 
+const ProductIdentifier = styled(BodyXs)`
+  margin-top: 4px;
+  color: ${({ theme: t }) => t.color.sonicSilver};
+`;
+
 /**
  * Catalogue tile: portrait image with a cross-fade to the second image, then
  * title, price and a quick-add button that appears on hover/focus.
@@ -174,7 +181,6 @@ export default function ProductCard({ product, eager = false, showQuickAdd = tru
                 alt={image.alt || product.name}
                 loading={eager ? "eager" : "lazy"}
                 decoding="async"
-                $crossfade={Boolean(second)}
               />
               {second ? (
                 <Secondary
@@ -187,7 +193,7 @@ export default function ProductCard({ product, eager = false, showQuickAdd = tru
             </>
           ) : (
             <NoImage>
-              <NoImageMark>Cereve</NoImageMark>
+              <NoImageMark>{STORE_NAME}</NoImageMark>
             </NoImage>
           )}
 
@@ -215,6 +221,8 @@ export default function ProductCard({ product, eager = false, showQuickAdd = tru
           <Link to={`/product/${product.slug}`}>{product.name}</Link>
         </Title>
 
+        {product.ean ? <ProductIdentifier>EAN: {product.ean}</ProductIdentifier> : null}
+
         {swatchCount > 1 ? (
           <Variants>
             {swatchCount} option{swatchCount === 1 ? "" : "s"}
@@ -234,6 +242,7 @@ const TileLink = styled(Link)`
 `;
 
 const TileMedia = styled.span`
+  position: relative;
   display: block;
   aspect-ratio: 3 / 4;
   overflow: hidden;
@@ -241,6 +250,9 @@ const TileMedia = styled.span`
   margin-bottom: 12px;
 
   img {
+    position: absolute;
+    inset: 0;
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -282,11 +294,14 @@ export function ProductTile({ product, onNavigate }) {
             alt=""
             loading="lazy"
             decoding="async"
+            onError={(event) => {
+              event.currentTarget.hidden = true;
+            }}
           />
         ) : (
           <NoImage as="span" style={{ position: "static", background: "none", padding: 0 }}>
             <NoImageMark as="span" style={{ fontSize: 9 }}>
-              Cereve
+              {STORE_NAME}
             </NoImageMark>
           </NoImage>
         )}

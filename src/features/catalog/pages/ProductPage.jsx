@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   getProductBySlug,
+  getProductEan,
   getProductVariations,
   getProducts,
   WooError
@@ -13,6 +14,7 @@ import { Price, Stars } from "../../../shared/ui/Price.jsx";
 import QuantityStepper from "../../../shared/ui/QuantityStepper.jsx";
 import ProductCard from "../../../features/catalog/components/ProductCard.jsx";
 import { NoImage, NoImageMark } from "../../../shared/ui/primitives.js";
+import { STORE_NAME } from "../../../shared/lib/branding.js";
 import { Accordion, DisclosureList, EmailCapture } from "../../../shared/ui/Accordion.jsx";
 import { ArrowIcon, CheckIcon, BagIcon, CloseIcon } from "../../../shared/ui/Icons.jsx";
 
@@ -30,6 +32,7 @@ export default function ProductPage() {
   const { open } = useUI();
 
   const [product, setProduct] = useState(null);
+  const [ean, setEan] = useState("");
   const [variations, setVariations] = useState([]);
   const [related, setRelated] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +50,7 @@ export default function ProductPage() {
     setLoading(true);
     setError("");
     setProduct(null);
+    setEan("");
     setSelected({});
     setQuantity(1);
     setActiveImage(0);
@@ -56,17 +60,19 @@ export default function ProductPage() {
       .then(async (found) => {
         if (!alive) return;
         setProduct(found);
+        getProductEan(found.id)
+          .then((value) => alive && setEan(value))
+          .catch(() => {});
 
         if (found.type === "variable") {
           const list = await getProductVariations(found.id);
           if (alive) setVariations(list);
         }
 
-        const categorySlug = found.categories?.[0]?.slug;
+        const categoryId = found.categories?.[0]?.id;
         const { items } = await getProducts({
-          category: categorySlug,
-          perPage: 5,
-          exclude: undefined
+          category: categoryId,
+          perPage: 5
         });
 
         if (alive) setRelated(items.filter((item) => item.id !== found.id).slice(0, 4));
@@ -215,7 +221,7 @@ export default function ProductPage() {
                 />
               ) : (
                 <NoImage>
-                  <NoImageMark>Cereve</NoImageMark>
+                  <NoImageMark>{STORE_NAME}</NoImageMark>
                 </NoImage>
               )}
 
@@ -371,14 +377,19 @@ export default function ProductPage() {
 
               <Accordion title="Ingredients">
                 <p>
-                  Every Cereve formula is reviewed for ingredient compatibility and
-                  is never tested on animals. Full ingredient lists are printed on
-                  each product page and on every carton.
+                  Full ingredient lists are printed on each product page. Vendor
+                  formulations are shown as supplied; always check the carton if
+                  you have an allergy.
                 </p>
               </Accordion>
             </div>
 
             <div className="pdp__skumeta body-xs muted">
+              {ean ? (
+                <p>
+                  <strong>EAN:</strong> {ean}
+                </p>
+              ) : null}
               {product.sku ? (
                 <p>
                   <strong>SKU:</strong> {product.sku}

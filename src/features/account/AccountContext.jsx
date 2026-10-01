@@ -60,7 +60,7 @@ export function AccountProvider({ children }) {
         // 401 = not signed in. Anything else still leaves us in guest mode,
         // but the failure is worth knowing about while developing.
         if (!(err instanceof WooError) || err.status !== 401) {
-          console.warn("[cereve] session restore failed", err);
+          console.warn("[storefront] session restore failed", err);
         }
         applySession(null);
       });

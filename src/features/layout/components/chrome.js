@@ -203,7 +203,8 @@ export const MegaClip = styled.div`
 
 export const MegaInner = styled.div`
   display: grid;
-  grid-template-columns: 200px 1fr 1.15fr;
+  grid-template-columns: ${({ $layout }) =>
+    $layout === "brands" ? "minmax(0, 1fr)" : "200px 1fr 1.15fr"};
   gap: 48px;
   padding-block: 40px 48px;
 `;
@@ -497,6 +498,54 @@ export const MegaProductGrid = styled.ul`
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   margin-top: 16px;
+  list-style: none;
+  padding: 0;
+`;
+
+export const MegaBrandSearch = styled.input`
+  width: min(420px, 100%);
+  margin-top: 8px;
+  padding: 10px 14px;
+  border: 1px solid ${({ theme: t }) => t.color.tan};
+  background: ${({ theme: t }) => t.color.stone};
+  font-size: 14px;
+  letter-spacing: -0.28px;
+  color: ${({ theme: t }) => t.color.cocoa};
+
+  &:focus {
+    outline: 2px solid ${({ theme: t }) => t.color.focus};
+    outline-offset: 2px;
+  }
+`;
+
+export const MegaLetters = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 16px;
+`;
+
+export const MegaLetter = styled.button`
+  min-width: 28px;
+  padding: 6px 4px;
+  font-size: 12px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: ${({ theme: t, $on }) => ($on ? t.color.white : t.color.cocoa)};
+  background: ${({ theme: t, $on }) => ($on ? t.color.cocoa : "transparent")};
+
+  &:hover {
+    background: ${({ theme: t, $on }) => ($on ? t.color.cocoa : t.color.grey200)};
+  }
+`;
+
+export const MegaBrandGrid = styled.ul`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px 24px;
+  margin-top: 20px;
+  max-height: 320px;
+  overflow: auto;
   list-style: none;
   padding: 0;
 `;

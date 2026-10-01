@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { getProducts, getProductTags } from "../../../shared/lib/woo.js";
-import { useCategories, groupCategories, loadCategories } from "../../../shared/lib/catalog.js";
+import { getProducts } from "../../../shared/lib/woo.js";
+import { useCatalog, filterBrands, loadCategories } from "../../../shared/lib/catalog.js";
 import ProductCard from "../../../features/catalog/components/ProductCard.jsx";
 import { ChevronIcon, CloseIcon, ArrowIcon } from "../../../shared/ui/Icons.jsx";
 
-const PER_PAGE = 12;
+const PER_PAGE = 24;
 
 const SORTS = [
   { value: "menu_order-asc", label: "Featured" },
@@ -23,35 +23,38 @@ const SORTS = [
  * `?sort=`, `?on_sale=1`, `?search=`, `?page=`.
  */
 export default function Shop() {
-  const { slug, child } = useParams();
+  const { slug, child, brandSlug } = useParams();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const { flat } = useCategories();
+  const { departments, brands, categories, loading: taxLoading } = useCatalog();
 
   const [data, setData] = useState({ items: [], total: 0, totalPages: 1 });
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [tags, setTags] = useState([]);
-  const firstRun = useRef(true);
 
-  // A nested path wins over the query string, so /shop/fashion/shoes is stable.
   const category = child ?? slug ?? params.get("category") ?? "";
+  const brandParam = brandSlug ?? params.get("brand") ?? "";
   const sort = params.get("sort") ?? "menu_order-asc";
   const onSale = params.get("on_sale") === "1";
   const search = params.get("search") ?? "";
   const page = Math.max(1, Number(params.get("page") ?? 1));
-  const activeTag = params.get("tag") ?? "";
 
   const [orderby, order] = sort.split("-");
 
   const current = useMemo(
-    () => flat.find((entry) => entry.slug === category) ?? null,
-    [flat, category]
+    () => departments.find((entry) => entry.slug === category) ?? categories.find((entry) => entry.slug === category) ?? null,
+    [departments, categories, category]
   );
 
+  const currentBrand = useMemo(
+    () => brands.find((entry) => entry.slug === brandParam) ?? null,
+    [brands, brandParam]
+  );
 
   useEffect(() => {
+    if (taxLoading) return undefined;
+
     let alive = true;
     setLoading(true);
     setFailed("");
@@ -59,8 +62,8 @@ export default function Shop() {
     getProducts({
       page,
       perPage: PER_PAGE,
-      category: category || undefined,
-      tag: activeTag || undefined,
+      category: current?.id || undefined,
+      brand: currentBrand?.id || undefined,
       onSale,
       search: search || undefined,
       orderby,
@@ -73,23 +76,7 @@ export default function Shop() {
     return () => {
       alive = false;
     };
-  }, [page, category, activeTag, onSale, search, orderby, order]);
-
-  // Shop page offers its own filter surface, so it needs the tag list.
-  useEffect(() => {
-    getProductTags({ perPage: 12 })
-      .then((list) => setTags(list))
-      .catch(() => setTags([]));
-  }, []);
-
-  // A filter change should always send the shopper back to page one.
-  useEffect(() => {
-    if (firstRun.current) {
-      firstRun.current = false;
-      return;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, activeTag, onSale, search, sort]);
+  }, [taxLoading, page, current?.id, currentBrand?.id, onSale, search, orderby, order]);
 
   function update(next, { resetPage = true } = {}) {
     const merged = new URLSearchParams(params);
@@ -105,16 +92,24 @@ export default function Shop() {
     const next = new URLSearchParams(params);
     next.delete("category");
     next.delete("page");
-    navigate({ pathname: "/shop", search: next.toString() });
+    navigate({ pathname: brandParam ? `/shop/brand/${brandParam}` : "/shop", search: next.toString() });
   }
 
-  const heading = current?.name ?? (search ? `Results for “${search}”` : "Shop All");
+  function clearBrand() {
+    const next = new URLSearchParams(params);
+    next.delete("brand");
+    next.delete("page");
+    navigate({ pathname: current ? `/shop/${current.slug}` : "/shop", search: next.toString() });
+  }
+
+  const heading =
+    currentBrand?.name ?? current?.name ?? (search ? `Results for “${search}”` : "Shop All");
   const description = current?.description || "";
 
   const activeChips = [
     current ? { key: "category", label: current.name, onClear: clearCategory } : null,
+    currentBrand ? { key: "brand", label: currentBrand.name, onClear: clearBrand } : null,
     onSale ? { key: "on_sale", label: "On sale" } : null,
-    activeTag ? { key: "tag", label: tags.find((t) => t.slug === activeTag)?.name ?? activeTag } : null,
     search ? { key: "search", label: `“${search}”` } : null
   ].filter(Boolean);
 
@@ -196,10 +191,13 @@ export default function Shop() {
         <div className="shop__layout">
           <aside className="shop__filters" data-open={filtersOpen} aria-label="Filters">
             <FilterPanel
-              flat={flat}
-              tags={tags}
+              departments={departments}
+              brands={brands}
+              current={current}
+              currentBrand={currentBrand}
               params={params}
               onUpdate={update}
+              onNavigate={navigate}
               onClose={() => setFiltersOpen(false)}
             />
           </aside>
@@ -250,9 +248,24 @@ export default function Shop() {
  * Filters
  * ------------------------------------------------------------------ */
 
-function FilterPanel({ flat, tags, params, onUpdate, onClose }) {
-  const tree = useMemo(() => groupCategories(flat), [flat]);
-  const active = params.get("category") ?? "";
+function FilterPanel({ departments, brands, current, currentBrand, params, onUpdate, onNavigate, onClose }) {
+  const [brandQuery, setBrandQuery] = useState("");
+  const matches = useMemo(
+    () => filterBrands(brands, { query: brandQuery }).slice(0, 40),
+    [brands, brandQuery]
+  );
+
+  function goDepartment(slug) {
+    const next = new URLSearchParams(params);
+    next.delete("page");
+    onNavigate({ pathname: slug ? `/shop/${slug}` : "/shop", search: next.toString() });
+  }
+
+  function goBrand(slug) {
+    const next = new URLSearchParams(params);
+    next.delete("page");
+    onNavigate({ pathname: slug ? `/shop/brand/${slug}` : "/shop", search: next.toString() });
+  }
 
   return (
     <div className="filters">
@@ -270,70 +283,62 @@ function FilterPanel({ flat, tags, params, onUpdate, onClose }) {
             <button
               type="button"
               className="filters__link"
-              data-active={!active || undefined}
-              onClick={() => onUpdate([["category", null]])}
+              data-active={!current || undefined}
+              onClick={() => goDepartment("")}
             >
               All
             </button>
           </li>
 
-          {tree.map((root) => (
+          {departments.map((root) => (
             <li key={root.id}>
               <button
                 type="button"
                 className="filters__link"
-                data-active={active === root.slug || undefined}
-                onClick={() => onUpdate([["category", root.slug]])}
+                data-active={current?.slug === root.slug || undefined}
+                onClick={() => goDepartment(root.slug)}
               >
                 {root.name}
-                <span className="filters__count">{root.count}</span>
+                <span className="filters__count">{root.count.toLocaleString()}</span>
               </button>
-
-              {root.children?.length ? (
-                <ul className="filters__sub">
-                  {root.children.map((child) => (
-                    <li key={child.id}>
-                      <button
-                        type="button"
-                        className="filters__link filters__link--sub"
-                        data-active={active === child.slug || undefined}
-                        onClick={() => onUpdate([["category", child.slug]])}
-                      >
-                        {child.name}
-                        <span className="filters__count">{child.count}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
             </li>
           ))}
         </ul>
       </div>
 
-      {tags.length ? (
-        <div className="filters__group">
-          <p className="sub-xs filters__label">Tag</p>
-          <ul className="filters__tags">
-            {tags.map((tag) => {
-              const on = params.get("tag") === tag.slug;
-
-              return (
-                <li key={tag.id}>
-                  <button
-                    type="button"
-                    className="tag"
-                    data-active={on || undefined}
-                    onClick={() => onUpdate([["tag", on ? null : tag.slug]])}
-                  >
-                    {tag.name}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      ) : null}
+      <div className="filters__group">
+        <p className="sub-xs filters__label">Brand</p>
+        <input
+          className="filters__search"
+          type="search"
+          value={brandQuery}
+          placeholder={`Search ${brands.length.toLocaleString()} brands`}
+          onChange={(event) => setBrandQuery(event.target.value)}
+        />
+        <ul className="filters__brands">
+          {currentBrand && !brandQuery ? (
+            <li>
+              <button type="button" className="filters__link" data-active onClick={() => goBrand("")}>
+                {currentBrand.name}
+                <span className="filters__count">clear</span>
+              </button>
+            </li>
+          ) : null}
+          {matches.map((brand) => (
+            <li key={brand.id}>
+              <button
+                type="button"
+                className="filters__link filters__link--sub"
+                data-active={currentBrand?.slug === brand.slug || undefined}
+                onClick={() => goBrand(brand.slug === currentBrand?.slug ? "" : brand.slug)}
+              >
+                {brand.name}
+                <span className="filters__count">{brand.count.toLocaleString()}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
 
       <div className="filters__group">
         <p className="sub-xs filters__label">Availability</p>
@@ -357,7 +362,10 @@ function FilterPanel({ flat, tags, params, onUpdate, onClose }) {
         <button
           type="button"
           className="btn btn--quiet btn--block"
-          onClick={() => onUpdate([["category", null], ["tag", null], ["on_sale", null], ["search", null]])}
+          onClick={() => {
+            onUpdate([["on_sale", null], ["search", null]]);
+            onNavigate({ pathname: "/shop" });
+          }}
         >
           Clear all
         </button>

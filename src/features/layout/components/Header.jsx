@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useCart } from "../../../features/cart/CartContext.jsx";
 import { useAccount } from "../../account/AccountContext.jsx";
-import { useCategories, useFeatured } from "../../../shared/lib/catalog.js";
+import { useFeatured, useCatalog, filterBrands } from "../../../shared/lib/catalog.js";
+import { STORE_NAME } from "../../../shared/lib/branding.js";
 import { ProductTile } from "../../catalog/components/ProductCard.jsx";
 import {
   ArrowIcon,
@@ -45,7 +46,11 @@ import {
   MegaLink,
   MegaBlurb,
   MegaProducts,
-  MegaProductGrid
+  MegaProductGrid,
+  MegaBrandSearch,
+  MegaLetters,
+  MegaLetter,
+  MegaBrandGrid
 } from "./chrome.js";
 
 /**
@@ -58,21 +63,24 @@ import {
  * handles its taxonomy. A hover sweep swaps an already-open panel instantly.
  */
 export default function Header({ onOpenSearch, onOpenMenu, onOpenCart }) {
-  const { roots, loading } = useCategories();
+  const { departments, brands, loading } = useCatalog();
   const location = useLocation();
 
   const [openMenu, setOpenMenu] = useState(null);
+  const [brandQuery, setBrandQuery] = useState("");
+  const [brandLetter, setBrandLetter] = useState("");
   const closeTimer = useRef(null);
 
-  // Any navigation dismisses the panel.
   useEffect(() => {
     setOpenMenu(null);
+    setBrandQuery("");
+    setBrandLetter("");
   }, [location.pathname, location.search]);
 
   useEffect(() => () => clearTimeout(closeTimer.current), []);
 
   const items = useMemo(() => {
-    const categories = roots.map((root) => ({
+    const primary = departments.slice(0, 6).map((root) => ({
       id: `cat-${root.id}`,
       label: root.name,
       kind: "category",
@@ -82,13 +90,14 @@ export default function Header({ onOpenSearch, onOpenMenu, onOpenCart }) {
 
     return [
       { id: "all", label: "Shop All", kind: "all", href: "/shop" },
-      ...categories,
-      { id: "best", label: "Bestsellers", kind: "best", href: "/shop?sort=popularity" }
+      ...primary,
+      { id: "brands", label: "Brands", kind: "brands", href: "/brands" },
+      { id: "sale", label: "Sale", kind: "sale", href: "/shop?on_sale=1" }
     ];
-  }, [roots]);
+  }, [departments]);
 
   const openItem = items.find((item) => item.id === openMenu) ?? null;
-  const columns = useMemo(() => buildColumns(openItem), [openItem]);
+  const columns = useMemo(() => buildColumns(openItem, departments), [openItem, departments]);
   const products = usePanelProducts(openItem);
   const onNavigate = () => setOpenMenu(null);
 
@@ -154,18 +163,62 @@ export default function Header({ onOpenSearch, onOpenMenu, onOpenCart }) {
             <MegaPanel $open={Boolean(openItem)} aria-hidden={!openItem}>
               {openItem ? (
                 <Container>
-                  <MegaInner>
+                    <MegaInner $layout={openItem.kind === "brands" ? "brands" : "default"}>
                     <MegaLead>
                       <SubXs $muted>Browse</SubXs>
 
                       <H2>{panelTitle(openItem)}</H2>
 
-                      <ButtonLink as={Link} to={openItem.href} onClick={onNavigate} $lg>
-                        Shop all
-                        <ArrowIcon />
-                      </ButtonLink>
+                      {openItem.kind === "brands" ? (
+                        <MegaBrandSearch
+                          type="search"
+                          value={brandQuery}
+                          placeholder={`Search ${brands.length.toLocaleString()} brands`}
+                          onChange={(event) => setBrandQuery(event.target.value)}
+                          aria-label="Search brands"
+                        />
+                      ) : (
+                        <ButtonLink as={Link} to={openItem.href} onClick={onNavigate} $lg>
+                          Shop all
+                          <ArrowIcon />
+                        </ButtonLink>
+                      )}
                     </MegaLead>
 
+                    {openItem.kind === "brands" ? (
+                      <div>
+                        <MegaLetters>
+                          {["", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ", "#"].map((letter) => (
+                            <MegaLetter
+                              key={letter || "all"}
+                              type="button"
+                              $on={brandLetter === letter}
+                              onClick={() => setBrandLetter((current) => (current === letter ? "" : letter))}
+                            >
+                              {letter || "All"}
+                            </MegaLetter>
+                          ))}
+                        </MegaLetters>
+
+                        <MegaBrandGrid>
+                          {filterBrands(brands, { query: brandQuery, letter: brandLetter })
+                            .slice(0, 120)
+                            .map((brand) => (
+                              <li key={brand.id}>
+                                <MegaLink as={Link} to={brand.href} onClick={onNavigate}>
+                                  {brand.name}
+                                </MegaLink>
+                              </li>
+                            ))}
+                        </MegaBrandGrid>
+
+                        <ButtonLink as={Link} to="/brands" onClick={onNavigate} style={{ marginTop: 16 }}>
+                          View all brands
+                          <ArrowIcon />
+                        </ButtonLink>
+                      </div>
+                    ) : (
+                      <>
                     <MegaLinks>
                       {columns.map((column, index) => (
                         <div key={column.heading ?? `col-${index}`}>
@@ -214,6 +267,8 @@ export default function Header({ onOpenSearch, onOpenMenu, onOpenCart }) {
                         )}
                       </MegaProductGrid>
                     </MegaProducts>
+                      </>
+                    )}
                   </MegaInner>
                 </Container>
               ) : null}
@@ -240,8 +295,8 @@ function TopBar({ onOpenSearch, onOpenMenu, onOpenCart }) {
           </Burger>
         </TopBarSide>
 
-        <Wordmark as={Link} to="/" aria-label="Cereve, home">
-          CEREVE
+        <Wordmark as={Link} to="/" aria-label={`${STORE_NAME}, home`}>
+          {STORE_NAME}
         </Wordmark>
 
         <TopBarUtils>
@@ -300,6 +355,8 @@ function BagButton({ onClick }) {
 function panelTitle(item) {
   if (!item) return "";
   if (item.kind === "category") return item.category.name;
+  if (item.kind === "sale") return "On sale";
+  if (item.kind === "brands") return "Shop by brand";
   if (item.kind === "best") return "Most loved";
   return "Everything";
 }
@@ -308,7 +365,7 @@ function panelTitle(item) {
  * The panel stays mounted between hovers so it can animate, so `item` is null
  * whenever the menu is closed — every branch has to tolerate that.
  */
-function buildColumns(item) {
+function buildColumns(item, departments = []) {
   if (!item) return [];
 
   if (item.kind === "category") {
@@ -331,7 +388,25 @@ function buildColumns(item) {
   }
 
   if (item.kind === "all") {
-    return [{ heading: "Start here", links: [{ label: "View everything", href: "/shop" }, { label: "Bestsellers", href: "/shop?sort=popularity" }] }];
+    return [
+      {
+        heading: "Start here",
+        links: [
+          { label: "View everything", href: "/shop" },
+          { label: "Bestsellers", href: "/shop?sort=popularity" },
+          { label: "On sale", href: "/shop?on_sale=1" },
+          { label: "All brands", href: "/brands" }
+        ]
+      },
+      {
+        heading: "Departments",
+        links: departments.map((department) => ({ label: department.name, href: department.href }))
+      }
+    ];
+  }
+
+  if (item.kind === "sale") {
+    return [{ heading: "Offers", links: [{ label: "See everything on sale", href: "/shop?on_sale=1" }] }];
   }
 
   return [{ heading: "Popular right now", links: [{ label: "See all bestsellers", href: "/shop?sort=popularity" }] }];
