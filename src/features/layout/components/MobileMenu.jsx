@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useUI, useBodyLock } from "../../../shared/UIContext.jsx";
-import { useCategories } from "../../../shared/lib/catalog.js";
+import { useCategories, primaryDepartments } from "../../../shared/lib/catalog.js";
 import {
   CloseIcon,
   MenuIcon,
@@ -45,6 +45,7 @@ export default function MobileMenu({ onOpenSearch, onOpenCart }) {
   const { isOpen, close } = useUI();
   const open = isOpen("menu");
   const { roots } = useCategories();
+  const menuRoots = primaryDepartments(roots);
   const [expanded, setExpanded] = useState(null);
   const panelRef = useRef(null);
 
@@ -104,7 +105,7 @@ export default function MobileMenu({ onOpenSearch, onOpenCart }) {
             <NavRow label="Brands" to="/brands" onNavigate={close} strong />
             <NavRow label="Sale" to="/shop?on_sale=1" onNavigate={close} />
 
-            {roots.map((category) => (
+            {menuRoots.map((category) => (
               <div key={category.id}>
                 <NavRow
                   label={category.name}

@@ -487,14 +487,13 @@ export async function getAllCollectionPages(path, params = {}) {
 
   if (pages <= 1) return first.items;
 
-  const items = [...first.items];
+  const remaining = await Promise.all(
+    Array.from({ length: pages - 1 }, (_, index) =>
+      getCollection(path, { ...params, page: index + 2, per_page: perPage })
+    )
+  );
 
-  for (let page = 2; page <= pages; page += 1) {
-    const next = await getCollection(path, { ...params, page, per_page: perPage });
-    items.push(...next.items);
-  }
-
-  return items;
+  return [...first.items, ...remaining.flatMap((page) => page.items)];
 }
 
 export async function getProductCategories({ perPage = 100, hideEmpty = true, page = 1 } = {}) {

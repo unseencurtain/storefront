@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useCart } from "../../../features/cart/CartContext.jsx";
 import { useAccount } from "../../account/AccountContext.jsx";
-import { useFeatured, useCatalog, filterBrands } from "../../../shared/lib/catalog.js";
+import { useFeatured, useCatalog, filterBrands, primaryDepartments } from "../../../shared/lib/catalog.js";
 import { STORE_NAME } from "../../../shared/lib/branding.js";
 import { ProductTile } from "../../catalog/components/ProductCard.jsx";
 import {
@@ -36,7 +36,6 @@ import {
   NavRailItem,
   NavRailLink,
   NavRailRule,
-  NavRailSkeleton,
   Mega as MegaShell,
   MegaClip,
   MegaInner,
@@ -63,7 +62,7 @@ import {
  * handles its taxonomy. A hover sweep swaps an already-open panel instantly.
  */
 export default function Header({ onOpenSearch, onOpenMenu, onOpenCart }) {
-  const { departments, brands, loading } = useCatalog();
+  const { departments, brands } = useCatalog();
   const location = useLocation();
 
   const [openMenu, setOpenMenu] = useState(null);
@@ -80,8 +79,8 @@ export default function Header({ onOpenSearch, onOpenMenu, onOpenCart }) {
   useEffect(() => () => clearTimeout(closeTimer.current), []);
 
   const items = useMemo(() => {
-    const primary = departments.slice(0, 6).map((root) => ({
-      id: `cat-${root.id}`,
+    const primary = primaryDepartments(departments).map((root) => ({
+      id: `cat-${root.slug}`,
       label: root.name,
       kind: "category",
       href: root.href,
@@ -123,13 +122,7 @@ export default function Header({ onOpenSearch, onOpenMenu, onOpenCart }) {
       <NavRail onMouseLeave={scheduleClose}>
         <Container>
           <NavRailList aria-label="Primary">
-            {loading
-              ? Array.from({ length: 4 }, (_, index) => (
-                  <NavRailItem key={index} aria-hidden="true">
-                    <NavRailSkeleton as={Skeleton} />
-                  </NavRailItem>
-                ))
-              : items.map((item) => {
+            {items.map((item) => {
                   const isOpen = openMenu === item.id;
 
                   return (

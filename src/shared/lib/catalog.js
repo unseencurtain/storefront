@@ -26,6 +26,53 @@ const DEMO_CAT_SLUGS = new Set(["body", "face", "hands", "legs", "uncategorized"
 const MEGA_DEPARTMENT_LIMIT = 15;
 const MEGA_BRAND_LIMIT = 24;
 
+const CATALOG_CACHE_KEY = "cosmetic.catalog.v1";
+const CATALOG_CACHE_MAX_AGE = 6 * 60 * 60 * 1000;
+
+export const PRIMARY_DEPARTMENT_NAV = [
+  { label: "Parapharmacy", slug: "parapharmacy", aliases: ["parapharmacy", "parapharma"] },
+  { label: "Drugstore", slug: "drugstore", aliases: ["drugstore"] },
+  { label: "Makeup", slug: "makeup", aliases: ["makeup"] },
+  { label: "Fragrance", slug: "fragrance", aliases: ["fragrance", "fragance"] },
+  { label: "Skin Care", slug: "skin-care", aliases: ["skincare"] },
+  { label: "Men", slug: "men", aliases: ["men", "mens"] }
+];
+
+const termKey = (value) => String(value ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+export function primaryDepartments(departments = []) {
+  return PRIMARY_DEPARTMENT_NAV.map((entry) => {
+    const category = departments.find((item) =>
+      entry.aliases.includes(termKey(item.slug)) || entry.aliases.includes(termKey(item.name))
+    );
+    return category ?? {
+      id: `nav-${entry.slug}`,
+      name: entry.label,
+      slug: entry.slug,
+      href: `/shop/${entry.slug}`,
+      children: []
+    };
+  });
+}
+
+function readCatalogCache() {
+  try {
+    const cached = JSON.parse(localStorage.getItem(CATALOG_CACHE_KEY) ?? "null");
+    if (cached?.catalog && Date.now() - cached.savedAt < CATALOG_CACHE_MAX_AGE) return cached.catalog;
+  } catch {
+    // Storage can be unavailable in private browsing; network loading still works.
+  }
+  return null;
+}
+
+function writeCatalogCache(catalog) {
+  try {
+    localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify({ savedAt: Date.now(), catalog }));
+  } catch {
+    // Keep the in-memory cache even when browser storage is full or disabled.
+  }
+}
+
 /** Preferred merchandising order; remaining slots fill by product count. */
 const FEATURED_BRAND_KEYS = [
   "dior",
@@ -105,7 +152,11 @@ function partitionCatalog(categories, brands) {
 }
 
 export function loadCatalog() {
-  catalogPromise ??= Promise.all([
+  catalogPromise ??= (() => {
+    const cached = readCatalogCache();
+    if (cached) return Promise.resolve(cached);
+
+    return Promise.all([
     // Keep every non-empty category available for direct product-category
     // links; department navigation still selects only parent categories below.
     getAllCollectionPages("/products/categories", { hide_empty: "true" }),
@@ -118,12 +169,15 @@ export function loadCatalog() {
         count: categoryCounts[String(term.id)] ?? 0
       }, "/shop"));
       const brands = rawBrands.map((term) => normaliseTerm(term, "/shop/brand"));
-      return partitionCatalog(categories, brands);
+      const catalog = partitionCatalog(categories, brands);
+      writeCatalogCache(catalog);
+      return catalog;
     })
-    .catch((error) => {
-      catalogPromise = null;
-      throw error;
-    });
+      .catch((error) => {
+        catalogPromise = null;
+        throw error;
+      });
+  })();
 
   return catalogPromise;
 }
