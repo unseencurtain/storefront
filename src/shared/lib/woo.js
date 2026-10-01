@@ -359,14 +359,39 @@ function withPriceParts(product) {
   };
 }
 
-/** Cart lines carry the same escaped strings as the catalogue. */
-function withDecodedItems(cart) {
+const cartProductSlugs = new Map();
+
+/** Woo cart rows omit the product slug, so resolve product IDs before exposing
+ *  cart links. This keeps the headless product route canonical throughout bag
+ *  and checkout views instead of linking to the numeric ID. */
+async function withDecodedItems(cart) {
   if (!cart?.items?.length) return cart;
+
+  const unresolvedIds = [...new Set(cart.items
+    .filter((item) => !item.slug && !item.product_slug && !cartProductSlugs.has(String(item.id)))
+    .map((item) => Number(item.id))
+    .filter((id) => id > 0))];
+
+  if (unresolvedIds.length) {
+    try {
+      const { items } = await getProducts({
+        include: unresolvedIds.join(","),
+        perPage: unresolvedIds.length,
+        stockStatus: ""
+      });
+      items.forEach((product) => {
+        if (product.slug) cartProductSlugs.set(String(product.id), product.slug);
+      });
+    } catch {
+      // Keep the cart usable if the optional URL lookup fails.
+    }
+  }
 
   return {
     ...cart,
     items: cart.items.map((item) => ({
       ...item,
+      slug: item.slug ?? item.product_slug ?? cartProductSlugs.get(String(item.id)) ?? "",
       name: decodeEntities(item.name),
       variation: (item.variation ?? []).map((entry) => ({
         ...entry,

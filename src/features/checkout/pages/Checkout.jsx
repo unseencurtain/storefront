@@ -788,7 +788,7 @@ function SummaryRail({ id, open, cart, promo, onPromo, onApplyPromo, onRemoveCou
             </SummaryThumb>
 
             <SummaryNames>
-              <BodySm>{item.name}</BodySm>
+              <BodySm as={Link} to={`/product/${item.slug || item.id}`}>{item.name}</BodySm>
               {item.variation?.length ? (
                 <BodyXs $muted>
                   {item.variation.map((variation) => variation.value).join(", ")}
