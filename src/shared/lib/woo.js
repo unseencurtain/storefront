@@ -422,7 +422,7 @@ export async function getProductEan(id) {
 export async function getCatalogMetadata(ids = []) {
   const uniqueIds = [...new Set(ids.map(Number).filter((id) => Number.isInteger(id) && id > 0))];
   if (!uniqueIds.length) return { products: {}, countries: {} };
-  return request(`/products/catalog-meta${query({ ids: uniqueIds.slice(0, 100).join(",") })}`, { base: WP });
+  return request(`/cereve/v1/products/catalog-meta${query({ ids: uniqueIds.slice(0, 100).join(",") })}`, { base: WP });
 }
 
 /** Resolve an exact EAN through WooCommerce's indexed global-unique-ID lookup. */
@@ -518,6 +518,11 @@ export async function getProductBrands({ perPage = 100, hideEmpty = true, page =
 
 export async function getAllProductCategories() {
   return getAllCollectionPages("/products/categories", { hide_empty: "true" });
+}
+
+/** Category counts for the same in-stock, image-bearing supplier catalogue as product lists. */
+export async function getCatalogCategoryCounts() {
+  return request("/cereve/v1/products/catalog-counts", { base: WP });
 }
 
 export async function getAllProductBrands() {

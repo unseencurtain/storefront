@@ -105,6 +105,15 @@ export default function Shop() {
   const heading =
     currentBrand?.name ?? current?.name ?? (search ? `Results for “${search}”` : "Shop All");
   const description = current?.description || "";
+  // WooCommerce's Store API can report the global catalogue total for a
+  // category query even though its returned product rows are category-scoped.
+  // Use the server-computed active catalogue count for the category header
+  // and pagination unless the shopper has narrowed it further.
+  const categoryOnly = Boolean(current && !currentBrand && !search && !onSale);
+  const visibleTotal = categoryOnly ? current.count : data.total;
+  const visibleTotalPages = categoryOnly
+    ? Math.max(1, Math.ceil(visibleTotal / PER_PAGE))
+    : data.totalPages;
 
   const activeChips = [
     current ? { key: "category", label: current.name, onClear: clearCategory } : null,
@@ -137,7 +146,7 @@ export default function Shop() {
           </div>
 
           <p className="shop__count body-sm muted">
-            {loading ? "Loading…" : `${data.total} ${data.total === 1 ? "Product" : "Products"}`}
+            {loading ? "Loading…" : `${visibleTotal} ${visibleTotal === 1 ? "Product" : "Products"}`}
           </p>
         </header>
 
@@ -224,8 +233,8 @@ export default function Shop() {
                   ))}
                 </div>
 
-                {data.totalPages > 1 ? (
-                  <Pagination page={page} totalPages={data.totalPages} onGo={(next) => update([["page", next]], { resetPage: false })} />
+                {visibleTotalPages > 1 ? (
+                  <Pagination page={page} totalPages={visibleTotalPages} onGo={(next) => update([["page", next]], { resetPage: false })} />
                 ) : null}
               </>
             ) : (

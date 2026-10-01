@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   getAllCollectionPages,
   getAllProductBrands,
+  getCatalogCategoryCounts,
   getProductAttributes,
   getProductAttributeTerms,
   getProducts
@@ -105,11 +106,17 @@ function partitionCatalog(categories, brands) {
 
 export function loadCatalog() {
   catalogPromise ??= Promise.all([
-    getAllCollectionPages("/products/categories", { hide_empty: "true", parent: 0 }),
-    getAllProductBrands()
+    // Keep every non-empty category available for direct product-category
+    // links; department navigation still selects only parent categories below.
+    getAllCollectionPages("/products/categories", { hide_empty: "true" }),
+    getAllProductBrands(),
+    getCatalogCategoryCounts().catch(() => ({}))
   ])
-    .then(([rawCategories, rawBrands]) => {
-      const categories = rawCategories.map((term) => normaliseTerm(term, "/shop"));
+    .then(([rawCategories, rawBrands, categoryCounts]) => {
+      const categories = rawCategories.map((term) => normaliseTerm({
+        ...term,
+        count: categoryCounts[String(term.id)] ?? 0
+      }, "/shop"));
       const brands = rawBrands.map((term) => normaliseTerm(term, "/shop/brand"));
       return partitionCatalog(categories, brands);
     })

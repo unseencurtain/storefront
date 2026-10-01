@@ -353,6 +353,34 @@
   line-height: 1.7;
 }
 
+.pdp__facts {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  color: var(--c-kabul);
+}
+
+.pdp__facts > div {
+  display: grid;
+  grid-template-columns: minmax(100px, 0.35fr) 1fr;
+  gap: 12px;
+}
+
+.pdp__facts dt {
+  color: var(--c-cocoa);
+  font-weight: 600;
+}
+
+.pdp__facts dd {
+  margin: 0;
+}
+
+.pdp__skumeta a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .pdp__options {
   display: flex;
   flex-direction: column;

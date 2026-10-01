@@ -94,6 +94,13 @@ export default function ProductPage() {
 
     return product.attributes
       .filter((attribute) => attribute.terms?.length)
+      // Only attributes with multiple actual variation values are purchase
+      // choices. Other attributes (including Volume) are product facts.
+      .filter((attribute) => product.type === "variable" && new Set(
+        variations
+          .map((variation) => attributeSlugFor(variation, attribute.taxonomy ?? attribute.name))
+          .filter(Boolean)
+      ).size > 1)
       .map((attribute) => {
         const variationsForTerm = new Map();
 
@@ -154,6 +161,7 @@ export default function ProductPage() {
 
   const activePrice = match?.priceParts ? { ...product, priceParts: match.priceParts, prices: match.prices ?? product.prices } : product;
   const activeStock = match ? match.is_in_stock : product?.is_in_stock;
+  const productFacts = (product?.attributes ?? []).filter((attribute) => attribute.terms?.length);
 
   async function handleAdd() {
     if (!canBuy || adding) return;
@@ -261,6 +269,17 @@ export default function ProductPage() {
                 className="pdp__short body-sm"
                 dangerouslySetInnerHTML={{ __html: product.shortDescriptionHtml }}
               />
+            ) : null}
+
+            {productFacts.length ? (
+              <dl className="pdp__facts body-sm">
+                {productFacts.map((attribute) => (
+                  <div key={attribute.id ?? attribute.name}>
+                    <dt>{attribute.name}</dt>
+                    <dd>{attribute.terms.map((term) => term.name).join(", ")}</dd>
+                  </div>
+                ))}
+              </dl>
             ) : null}
 
             {/* Option groups */}
@@ -398,7 +417,12 @@ export default function ProductPage() {
               {product.categories?.length ? (
                 <p>
                   <strong>Category:</strong>{" "}
-                  {product.categories.map((category) => category.name).join(", ")}
+                  {product.categories.map((category, index) => (
+                    <span key={category.id}>
+                      {index ? ", " : ""}
+                      <Link to={`/shop/${category.slug}`}>{category.name}</Link>
+                    </span>
+                  ))}
                 </p>
               ) : null}
             </div>

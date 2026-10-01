@@ -59,6 +59,16 @@ add_action(
 				),
 			)
 		);
+
+		register_rest_route(
+			'cereve/v1',
+			'/products/catalog-counts',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'permission_callback' => '__return_true',
+				'callback'            => 'cereve_storefront_catalog_counts',
+			)
+		);
 	}
 );
 
@@ -121,6 +131,35 @@ function cereve_storefront_catalog_meta( WP_REST_Request $request ) {
 	}
 	$country_names = function_exists( 'WC' ) && WC()->countries ? WC()->countries->get_allowed_countries() : array();
 	return rest_ensure_response( array( 'products' => $out, 'countries' => $country_names ) );
+}
+
+/** Count only in-stock, image-bearing products from the active supplier feeds. */
+function cereve_storefront_catalog_counts() {
+	global $wpdb;
+	$cached = wp_cache_get( 'active_product_category_counts', 'cereve_storefront' );
+	if ( false !== $cached ) {
+		return rest_ensure_response( $cached );
+	}
+
+	$lookup = $wpdb->prefix . 'wc_product_meta_lookup';
+	$rows   = $wpdb->get_results(
+		"SELECT tt.term_id, COUNT(DISTINCT p.ID) AS product_count
+		FROM {$wpdb->term_taxonomy} tt
+		INNER JOIN {$wpdb->term_relationships} tr ON tr.term_taxonomy_id = tt.term_taxonomy_id
+		INNER JOIN {$wpdb->posts} p ON p.ID = tr.object_id AND p.post_type = 'product' AND p.post_status = 'publish'
+		INNER JOIN {$wpdb->postmeta} vendor ON vendor.post_id = p.ID AND vendor.meta_key = '_sillage_vendor' AND vendor.meta_value IN ('beautyfort', 'bts')
+		INNER JOIN {$wpdb->postmeta} image ON image.post_id = p.ID AND image.meta_key = '_external_thumbnail_url' AND image.meta_value <> ''
+		INNER JOIN {$lookup} lookup ON lookup.product_id = p.ID AND lookup.stock_status = 'instock'
+		WHERE tt.taxonomy = 'product_cat'
+		GROUP BY tt.term_id",
+		ARRAY_A
+	);
+	$counts = array();
+	foreach ( (array) $rows as $row ) {
+		$counts[ (string) $row['term_id'] ] = (int) $row['product_count'];
+	}
+	wp_cache_set( 'active_product_category_counts', $counts, 'cereve_storefront', 300 );
+	return rest_ensure_response( $counts );
 }
 
 /** Resolve an EAN through WooCommerce's indexed global unique ID lookup. */
