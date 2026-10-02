@@ -534,10 +534,12 @@ export const AccordionIcon = styled.span`
 export const AccordionPanel = styled.div`
   display: grid;
   grid-template-rows: ${({ $open }) => ($open ? "1fr" : "0fr")};
+  visibility: ${({ $open }) => ($open ? "visible" : "hidden")};
   transition: grid-template-rows 250ms ${({ theme: t }) => t.motion.ease};
 
   > div {
     overflow: hidden;
+    min-height: 0;
   }
 `;
 

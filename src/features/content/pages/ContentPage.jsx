@@ -5,6 +5,17 @@ import { useEffect, useState } from "react";
 import { ArrowIcon, BagIcon } from "../../../shared/ui/Icons.jsx";
 import { Accordion } from "../../../shared/ui/Accordion.jsx";
 
+const LEGAL_PAGES = {
+  "privacy-policy": "Privacy Policy",
+  "terms-and-conditions": "Terms and Conditions",
+  "refund-and-returns": "Refund & Returns Policy",
+  "payment-terms": "Payment Terms",
+  "order-tracking": "Order Tracking",
+  contact: "Contact",
+  faq: "Frequently Asked Questions",
+  "category-descriptions": "Category Descriptions"
+};
+
 /** Renders a WordPress page by slug, with an editorial fallback. */
 export default function ContentPage({ slug: slugProp }) {
   const params = useParams();
@@ -20,6 +31,23 @@ export default function ContentPage({ slug: slugProp }) {
   useEffect(() => {
     let alive = true;
     setLoading(true);
+
+    if (LEGAL_PAGES[slug]) {
+      fetch(`/legal-pages/${slug}.html`)
+        .then((response) => {
+          if (!response.ok) throw new Error("Legal page unavailable");
+          return response.text();
+        })
+        .then((content) => {
+          if (alive) setPage({ title: { rendered: LEGAL_PAGES[slug] }, content: { rendered: content } });
+        })
+        .catch(() => alive && setPage(null))
+        .finally(() => alive && setLoading(false));
+
+      return () => {
+        alive = false;
+      };
+    }
 
     getPages({ perPage: 100 })
       .then((pages) => alive && setPage(pages.find((entry) => entry.slug === slug) ?? null))
@@ -85,7 +113,7 @@ function titleFor(slug) {
       account: "My Account",
       cart: "Shopping Bag",
       checkout: "Checkout"
-    }[slug] ?? slug
+    }[slug] ?? LEGAL_PAGES[slug] ?? slug
   );
 }
 
@@ -93,7 +121,7 @@ function AboutBody() {
   return (
     <div className="prose">
       <p>
-        Cosmetic is a multi-brand retailer for makeup, skincare, hair and
+        PrinsCosmetic is a multi-brand retailer for makeup, skincare, hair and
         fragrance. The catalogue is imported from wholesale feeds; this
         storefront is a React app talking to WooCommerce’s Store API for cart,
         checkout and accounts.
@@ -120,12 +148,13 @@ function HelpBody() {
   return (
     <div className="acc-list">
       <Accordion title="When will my order arrive?" defaultOpen>
-        Orders ship within 1–2 business days and standard delivery takes 3–5
-        business days. You’ll receive tracking by email.
+        Orders typically arrive within 1–3 business days in the Netherlands and
+        3–7 business days across the EU. You’ll receive tracking by email.
       </Accordion>
       <Accordion title="How do returns work?">
-        Send items back within 30 days of delivery for a full refund. We cover
-        the return label; refunds clear 3–5 days after the parcel reaches us.
+        Send unused, unsealed items back within 14 days of delivery. Return
+        shipping is generally paid by the customer; refunds are issued to the
+        original payment method within 14 days of receiving the return.
       </Accordion>
       <Accordion title="Can I change or cancel an order?">
         Yes — contact us within an hour of placing it and we’ll catch it before

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { EmailCapture } from "../../../shared/ui/Accordion.jsx";
 import {
@@ -6,14 +5,8 @@ import {
   Container,
   H2,
   SubSm,
-  SubXs,
   BodyMd,
-  BodyXs,
-  AccordionRoot,
-  AccordionTrigger,
-  AccordionIcon,
-  AccordionPanel,
-  AccordionContent
+  BodyXs
 } from "../../../shared/ui/primitives.js";
 import {
   SiteFooter,
@@ -21,6 +14,11 @@ import {
   MissionInner,
   MissionTitle,
   MissionBody,
+  FooterClient,
+  ClientBrand,
+  ClientMark,
+  ClientCopy,
+  ClientAddress,
   FooterMain,
   FooterMainInner,
   FooterNavDesktop,
@@ -28,22 +26,12 @@ import {
   FooterNavColumn,
   FooterNavHeading,
   FooterNavLink,
-  FooterAccordionRoot,
-  FooterAccordionList,
-  CommitmentsHead,
-  CommitmentsList,
-  CommitmentItem,
-  CommitmentLink,
   FooterNews,
-  FooterLocale,
-  FooterLocaleInner,
-  FooterLocaleList,
-  FooterLocaleItem,
+  FooterNewsSocial,
   FooterLegal,
   FooterLegalInner,
   FooterLegalLinks,
   FooterLegalLink,
-  FooterLegalSocial,
   FooterLegalSocialLink
 } from "./footer.js";
 import {
@@ -55,9 +43,6 @@ import {
   YouTubeIcon,
   PinterestIcon,
   XIcon,
-  PlanetIcon,
-  BunnyIcon,
-  AccessibilityIcon
 } from "../../../shared/ui/Icons.jsx";
 import { STORE_NAME } from "../../../shared/lib/branding.js";
 
@@ -65,8 +50,8 @@ import { STORE_NAME } from "../../../shared/lib/branding.js";
  * Footer.
  *
  * Four stacked bands, matching the editorial reference: a light mission panel,
- * then the rose-clay main footer carrying the link columns, commitments and
- * newsletter, then the locale row, then a legal strip with social and payment
+ * then the rose-clay main footer carrying the link columns and newsletter,
+ * then the locale row, then a legal strip with social and payment
  * marks. Link columns collapse into accordions on small screens.
  */
 
@@ -84,29 +69,16 @@ const COLUMNS = [
     heading: "Help",
     links: [
       { label: "My Account", to: "/account" },
-      { label: "Shipping + Delivery", to: "/help" },
-      { label: "Track Package", to: "/account" },
-      { label: "Start a Return", to: "/help" },
-      { label: "Contact Us", to: "/help" },
-      { label: "FAQ", to: "/help" }
+      { label: "Track Package", to: "/order-tracking" },
+      { label: "Contact Us", to: "/contact" }
     ]
   },
   {
     heading: "About",
     links: [
-      { label: "About Us", to: "/about" },
-      { label: "Help", to: "/help" },
+      { label: "About Us", to: "/about" }
     ]
   },
-  {
-    heading: "Promotion Details",
-    links: [
-      { label: "Current Promotions", to: "/help" },
-      { label: "Student Discounts", to: "/help" },
-      { label: "Teacher Discounts", to: "/help" },
-      { label: "First Order Offer", to: "/help" }
-    ]
-  }
 ];
 
 const SOCIALS = [
@@ -118,22 +90,12 @@ const SOCIALS = [
   { label: "X", href: "https://x.com", icon: XIcon }
 ];
 
-const COMMITMENTS = [
-  { label: "1% For The Planet", icon: PlanetIcon, to: "/about" },
-  { label: "Leaping Bunny", icon: BunnyIcon, to: null },
-  { label: "Accessibility", icon: AccessibilityIcon, to: "/help" }
-];
-
 const LEGAL = [
-  { label: "Privacy", to: "/about" },
-  { label: "Terms", to: "/about" },
-  { label: "CA Privacy", to: "/about" },
-  { label: "Do Not Sell or Share My Personal Information", to: "/about" },
-  { label: "Accessibility", to: "/help" },
-  { label: "Sitemap", to: "/shop" }
+  { label: "Privacy", to: "/privacy-policy" },
+  { label: "Terms", to: "/terms-and-conditions" },
+  { label: "Returns", to: "/refund-and-returns" },
+  { label: "Refunds", to: "/refund-and-returns" }
 ];
-
-const MARKETS = ["$US", "£GB", "€EU", "$CA", "$AU"];
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -162,31 +124,24 @@ export default function Footer() {
       <FooterMain>
         <Container>
           <FooterMainInner>
-          <FooterNav />
+            <FooterClient>
+            <ClientBrand>
+              <ClientMark aria-hidden="true">P</ClientMark>
+              <SubSm as="h2">PrinsCosmetic</SubSm>
+            </ClientBrand>
+            <ClientCopy as={BodyMd}>
+              A premium destination for authentic perfumes, skincare, makeup and
+              gift sets — sourced directly from the world's most celebrated brands.
+            </ClientCopy>
+            <ClientAddress as={BodyMd}>
+              Lovely Perfume Store B.V.<br />
+              Bargelaan 200, 2333 CW Leiden<br />
+              The Netherlands
+            </ClientAddress>
+            </FooterClient>
+           <FooterNav />
 
-          <div>
-            <CommitmentsHead as={SubXs}>Commitments</CommitmentsHead>
-
-            <CommitmentsList>
-              {COMMITMENTS.map((item) => {
-                const inner = <item.icon size={26} />;
-
-                return (
-                  <CommitmentItem key={item.label}>
-                    {item.to ? (
-                      <CommitmentLink as={Link} to={item.to} aria-label={item.label}>
-                        {inner}
-                      </CommitmentLink>
-                    ) : (
-                      <span aria-label={item.label}>{inner}</span>
-                    )}
-                  </CommitmentItem>
-                );
-              })}
-            </CommitmentsList>
-          </div>
-
-          <FooterNews>
+           <FooterNews>
             <SubSm as="h2">15% off your first order</SubSm>
 
             <EmailCapture
@@ -200,30 +155,24 @@ export default function Footer() {
                 await new Promise((resolve) => setTimeout(resolve, 400));
               }}
             />
+            <FooterNewsSocial aria-label="Social media">
+              {SOCIALS.map((social) => (
+                <li key={social.label}>
+                  <FooterLegalSocialLink
+                    href={social.href}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    aria-label={social.label}
+                  >
+                    <social.icon size={17} />
+                  </FooterLegalSocialLink>
+                </li>
+              ))}
+            </FooterNewsSocial>
           </FooterNews>
           </FooterMainInner>
         </Container>
       </FooterMain>
-
-      {/* Locale row */}
-      <FooterLocale>
-        <Container>
-          <FooterLocaleInner>
-            <SubXs as="span">Currency</SubXs>
-
-            <FooterLocaleList>
-              {MARKETS.map((market, index) => (
-                <li key={market}>
-                  <FooterLocaleItem type="button" $active={index === 0}>
-                    {market}
-                    {index === 0 ? <span aria-hidden="true">✓</span> : null}
-                  </FooterLocaleItem>
-                </li>
-              ))}
-            </FooterLocaleList>
-          </FooterLocaleInner>
-        </Container>
-      </FooterLocale>
 
       {/* Legal strip */}
       <FooterLegal>
@@ -241,20 +190,6 @@ export default function Footer() {
               ))}
             </FooterLegalLinks>
 
-            <FooterLegalSocial>
-              {SOCIALS.map((social) => (
-                <li key={social.label}>
-                  <FooterLegalSocialLink
-                    href={social.href}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    aria-label={social.label}
-                  >
-                    <social.icon size={17} />
-                  </FooterLegalSocialLink>
-                </li>
-              ))}
-            </FooterLegalSocial>
           </FooterLegalInner>
         </Container>
       </FooterLegal>
@@ -289,40 +224,21 @@ function FooterNav() {
 
       <FooterNavMobile>
         {COLUMNS.map((column) => (
-          <FooterAccordion key={column.heading} column={column} />
+          <FooterNavColumn key={column.heading} aria-label={column.heading}>
+            <FooterNavHeading>{column.heading}</FooterNavHeading>
+            <ul>
+              {column.links.map((link) => (
+                <li key={link.label}>
+                  <FooterNavLink as={Link} to={link.to}>
+                    {link.label}
+                  </FooterNavLink>
+                </li>
+              ))}
+            </ul>
+          </FooterNavColumn>
         ))}
       </FooterNavMobile>
     </div>
-  );
-}
-
-function FooterAccordion({ column }) {
-  const [open, setOpen] = useState(false);
-  const id = `footer-${column.heading.toLowerCase().replace(/\s+/g, "-")}`;
-
-  return (
-    <AccordionRoot as={FooterAccordionRoot}>
-      <AccordionTrigger as="h3">
-        <button type="button" aria-expanded={open} aria-controls={id} onClick={() => setOpen((v) => !v)}>
-          {column.heading}
-          <AccordionIcon $open={open} aria-hidden="true" />
-        </button>
-      </AccordionTrigger>
-
-      <AccordionPanel id={id} $open={open} role="region">
-        <AccordionContent>
-          <FooterAccordionList>
-            {column.links.map((link) => (
-              <li key={link.label}>
-                <FooterNavLink as={Link} to={link.to}>
-                  {link.label}
-                </FooterNavLink>
-              </li>
-            ))}
-          </FooterAccordionList>
-        </AccordionContent>
-      </AccordionPanel>
-    </AccordionRoot>
   );
 }
 
