@@ -1227,10 +1227,6 @@ button.filters__close {
   white-space: nowrap;
 }
 
-.hero__marqueegroup .hero__marqueeitem:last-child {
-  padding-right: 0;
-}
-
 .hero__marqueedot {
   color: var(--c-grey-400);
 }
