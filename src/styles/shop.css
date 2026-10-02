@@ -1209,6 +1209,11 @@ button.filters__close {
   animation: marquee 32s linear infinite;
 }
 
+.hero__marqueegroup {
+  display: flex;
+  flex: none;
+}
+
 .hero__marqueeitem {
   display: inline-flex;
   align-items: center;
@@ -1222,13 +1227,17 @@ button.filters__close {
   white-space: nowrap;
 }
 
+.hero__marqueegroup .hero__marqueeitem:last-child {
+  padding-right: 0;
+}
+
 .hero__marqueedot {
   color: var(--c-grey-400);
 }
 
 @keyframes marquee {
   to {
-    transform: translateX(-50%);
+    transform: translateX(-25%);
   }
 }
 
