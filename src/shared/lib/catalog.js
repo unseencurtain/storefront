@@ -26,7 +26,7 @@ const DEMO_CAT_SLUGS = new Set(["body", "face", "hands", "legs", "uncategorized"
 const MEGA_DEPARTMENT_LIMIT = 15;
 const MEGA_BRAND_LIMIT = 24;
 
-const CATALOG_CACHE_KEY = "cosmetic.catalog.v1";
+const CATALOG_CACHE_KEY = "cosmetic.catalog.v2";
 const CATALOG_CACHE_MAX_AGE = 6 * 60 * 60 * 1000;
 
 export const PRIMARY_DEPARTMENT_NAV = [
@@ -148,6 +148,18 @@ function partitionCatalog(categories, brands) {
       return true;
     })
     .sort((a, b) => b.count - a.count);
+
+  // Damen is nested under Duft in the live catalogue, but it is a primary
+  // storefront department and must also be available in the shop filters.
+  const women = categories.find(
+    (category) => ["women", "woman", "damen"].includes(termKey(category.slug)) ||
+      ["women", "woman", "damen"].includes(termKey(category.name))
+  );
+  if (women && !departments.some((department) => department.id === women.id)) {
+    const womenDepartment = { ...women, name: "Women" };
+    const menIndex = departments.findIndex((department) => ["men", "mens"].includes(termKey(department.slug)));
+    departments.splice(menIndex < 0 ? departments.length : menIndex, 0, womenDepartment);
+  }
 
   return { departments, brands, categories };
 }
