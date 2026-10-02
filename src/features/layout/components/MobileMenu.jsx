@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useUI, useBodyLock } from "../../../shared/UIContext.jsx";
-import { useCategories } from "../../../shared/lib/catalog.js";
+import { useCategories, primaryDepartments } from "../../../shared/lib/catalog.js";
 import {
   CloseIcon,
   MenuIcon,
@@ -31,6 +31,7 @@ import {
   MenuSocialLink
 } from "./chrome.js";
 import { AccordionIcon } from "../../../shared/ui/primitives.js";
+import { STORE_NAME } from "../../../shared/lib/branding.js";
 import { SOCIALS } from "./Footer.jsx";
 
 /**
@@ -44,6 +45,7 @@ export default function MobileMenu({ onOpenSearch, onOpenCart }) {
   const { isOpen, close } = useUI();
   const open = isOpen("menu");
   const { roots } = useCategories();
+  const menuRoots = primaryDepartments(roots);
   const [expanded, setExpanded] = useState(null);
   const panelRef = useRef(null);
 
@@ -79,7 +81,7 @@ export default function MobileMenu({ onOpenSearch, onOpenCart }) {
       >
         <DrawerHead>
           <Wordmark as={Link} to="/" $small onClick={close}>
-            CEREVE
+            {STORE_NAME}
           </Wordmark>
 
           <IconButton type="button" onClick={close} aria-label="Close menu">
@@ -91,7 +93,6 @@ export default function MobileMenu({ onOpenSearch, onOpenCart }) {
           <MenuSearch
             type="button"
             onClick={() => {
-              close();
               onOpenSearch();
             }}
           >
@@ -101,8 +102,9 @@ export default function MobileMenu({ onOpenSearch, onOpenCart }) {
 
           <MenuNav aria-label="Mobile">
             <NavRow label="Shop All" to="/shop" onNavigate={close} strong />
+            <NavRow label="Brands" to="/brands" onNavigate={close} strong />
 
-            {roots.map((category) => (
+            {menuRoots.map((category) => (
               <div key={category.id}>
                 <NavRow
                   label={category.name}

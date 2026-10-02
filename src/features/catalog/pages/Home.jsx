@@ -7,6 +7,21 @@ import { ArrowIcon, BagIcon, SearchIcon, CheckIcon, StarIcon } from "../../../sh
 import { EmailCapture } from "../../../shared/ui/Accordion.jsx";
 
 /** Editorial home: hero statement, category rail, featured grid, journal band. */
+const MARQUEE_BRANDS = [
+  "Dior",
+  "Chanel",
+  "Nivea",
+  "L'Oreal",
+  "Maybelline",
+  "Clarins",
+  "CeraVe",
+  "Revlon",
+  "Shiseido",
+  "Clinique",
+  "Vichy",
+  "Garnier"
+];
+
 export default function Home() {
   const { roots } = useCategories();
   const [featured, setFeatured] = useState([]);
@@ -42,14 +57,14 @@ export default function Home() {
           <p className="sub-sm hero__eyebrow">New season</p>
 
           <h1 className="hdr-xl hero__title">
-            Makeup That Makes
+            Makeup, skincare, fragrance
             <br />
-            Your Skin Better™
+            from thousands of brands
           </h1>
 
           <p className="body-lg hero__lede">
-            Thoughtful formulations in every category — complexion, eye, lip and
-            body — built to perform and to protect your skin.
+            A wholesale-fed catalogue of pharmacy, prestige and professional
+            beauty — shop by department or jump straight to a brand.
           </p>
 
           <div className="hero__actions">
@@ -65,9 +80,9 @@ export default function Home() {
 
         <div className="hero__marquee" aria-hidden="true">
           <div className="hero__marqueetrack">
-            {Array.from({ length: 2 }, (_, group) => (
-              <span key={group}>
-                {["Clean formulas", "Cruelty free", "Recyclable packaging", "Free returns", "Made in small batches"].map(
+            {Array.from({ length: 4 }, (_, group) => (
+              <span key={group} className="hero__marqueegroup">
+                {MARQUEE_BRANDS.map(
                   (item) => (
                     <span key={item} className="hero__marqueeitem">
                       {item}
@@ -144,9 +159,9 @@ export default function Home() {
       <section className="promises">
         <div className="container promises__inner">
           {[
-            { title: "Formulated with care", body: "Every product is reviewed for performance and skin compatibility." },
-            { title: "Small batch", body: "Made in limited runs so nothing sits in a warehouse for years." },
-            { title: "Easy returns", body: "Thirty days to change your mind, on us." }
+            { title: "Huge catalogue", body: "Tens of thousands of SKUs across makeup, skincare, hair and fragrance." },
+            { title: "Shop by brand", body: "Jump to any of two thousand brands from the menu or the filter." },
+            { title: "Easy returns", body: "Thirty days to change your mind." }
           ].map((item) => (
             <div key={item.title} className="promise">
               <CheckIcon size={18} />

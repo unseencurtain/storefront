@@ -93,9 +93,10 @@ function AboutBody() {
   return (
     <div className="prose">
       <p>
-        Cereve began with a simple frustration: too many products promise more
-        than they deliver, and most of them work against the skin they sit on.
-        We make fewer things, formulate them properly, and label everything.
+        Cosmetic is a multi-brand retailer for makeup, skincare, hair and
+        fragrance. The catalogue is imported from wholesale feeds; this
+        storefront is a React app talking to WooCommerce’s Store API for cart,
+        checkout and accounts.
       </p>
 
       <h2>What we stand for</h2>
@@ -131,11 +132,11 @@ function HelpBody() {
         it ships.
       </Accordion>
       <Accordion title="Do you ship internationally?">
-        We currently ship across North America, the UK and the EU. Duties for
-        international orders are calculated at checkout.
+        We currently ship across the EU and the UK. Duties and shipping rates
+        come from WooCommerce at checkout.
       </Accordion>
       <Accordion title="Something else?">
-        Write to hello@cereve.example and we’ll pick it up within one business
+        Write to the shop from the Help page and we’ll pick it up within one business
         day.
       </Accordion>
     </div>

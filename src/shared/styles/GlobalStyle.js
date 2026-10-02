@@ -15,10 +15,13 @@ const GlobalStyle = createGlobalStyle`
 
   html {
     -webkit-text-size-adjust: 100%;
+    overflow-x: clip;
   }
 
   body {
     margin: 0;
+    max-width: 100%;
+    overflow-x: clip;
     background: ${({ theme: t }) => t.color.white};
     color: ${({ theme: t }) => t.color.kabul};
     font-family: ${({ theme: t }) => t.font.sans};
@@ -29,6 +32,11 @@ const GlobalStyle = createGlobalStyle`
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  #root {
+    max-width: 100%;
+    overflow-x: clip;
   }
 
   body.is-locked {

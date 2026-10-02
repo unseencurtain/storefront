@@ -5,6 +5,7 @@ import { UIProvider } from "./shared/UIContext.jsx";
 import Layout from "./features/layout/components/Layout.jsx";
 import Home from "./features/catalog/pages/Home.jsx";
 import Shop from "./features/catalog/pages/Shop.jsx";
+import BrandsPage from "./features/catalog/pages/Brands.jsx";
 import ProductPage from "./features/catalog/pages/ProductPage.jsx";
 import CartPage from "./features/cart/pages/CartPage.jsx";
 import Checkout from "./features/checkout/pages/Checkout.jsx";
@@ -17,8 +18,8 @@ import ContentPage, { NotFound } from "./features/content/pages/ContentPage.jsx"
 
 /** Two-segment collection paths, e.g. /shop/fashion/shoes. */
 function ShopRoute() {
-  const { slug, child } = useParams();
-  return <Shop key={`${slug ?? ""}/${child ?? ""}`} />;
+  const { slug, child, brandSlug } = useParams();
+  return <Shop key={`${brandSlug ?? ""}/${slug ?? ""}/${child ?? ""}`} />;
 }
 
 export default function App() {
@@ -34,8 +35,14 @@ export default function App() {
                 <Route index element={<Home />} />
 
                 <Route path="shop" element={<Shop />} />
+                <Route path="shop/brand/:brandSlug" element={<ShopRoute />} />
                 <Route path="shop/:slug" element={<ShopRoute />} />
                 <Route path="shop/:slug/:child" element={<ShopRoute />} />
+                <Route path="brands" element={<BrandsPage />} />
+                {/* WordPress permalinks from the static sitemaps / old theme */}
+                <Route path="brand/:brandSlug" element={<ShopRoute />} />
+                <Route path="product-category/:slug" element={<ShopRoute />} />
+                <Route path="product-category/:slug/:child" element={<ShopRoute />} />
 
                 <Route path="product/:slug" element={<ProductPage />} />
                 <Route path="products/:slug" element={<ProductPage />} />

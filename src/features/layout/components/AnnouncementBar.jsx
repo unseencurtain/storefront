@@ -16,24 +16,16 @@ import {
 /** The rotating offer strip above the header, with its own disclosure panel. */
 const OFFERS = [
   {
-    title: "Free Mini Eye Stylus",
-    body: "Add a Limited Edition Mini Eye Stylus to any order over $75 while supplies last."
+    title: "Free EU shipping over €75",
+    body: "Standard shipping is free on qualifying orders. Rates at checkout follow WooCommerce zones."
   },
   {
-    title: "2 New Overglaze Shades",
-    body: "Two limited-run shades have landed. Small batch, sold through in days."
+    title: "Shop 2,000+ brands",
+    body: "Use the Brands menu or the shop filter to jump straight to a house."
   },
   {
-    title: "4x VIP Points on Overglaze",
-    body: "Every Overglaze purchase earns four times the usual points this month."
-  },
-  {
-    title: "30% Off of Multi-Stick",
-    body: "Mix and match any three Multi-Sticks and take a third off the set."
-  },
-  {
-    title: "40% Off of Color Haze",
-    body: "The limited Color Haze drop is 40% off through the end of the season."
+    title: "Pharmacy & prestige",
+    body: "Parapharmacy, drugstore, makeup and professional hair in one catalogue."
   }
 ];
 

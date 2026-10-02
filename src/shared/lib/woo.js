@@ -7,16 +7,17 @@
  *   /wp-json/wc/store/v1/cart             session cart
  *   /wp-json/wc/store/v1/checkout         order placement
  *
- * Dev requests are proxied through Vite (see vite.config.js), which is why we
- * talk to the relative `/woo-api` prefix rather than an absolute host.
+ * In development Vite proxies `/woo-api` and `/wp-api` (see vite.config.js).
+ * In production Caddy serves the SPA on the same host as WordPress, so we
+ * talk to the real REST prefixes and keep auth cookies first-party.
  */
 
 import { decodeEntities } from "./format.js";
 
-const STORE = "/woo-api";
-const WP = "/wp-api";
+const STORE = import.meta.env.DEV ? "/woo-api" : "/wp-json/wc/store/v1";
+const WP = import.meta.env.DEV ? "/wp-api" : "/wp-json";
 
-const TOKEN_KEY = "cereve.cart.token";
+const TOKEN_KEY = "cosmetic.cart.token";
 
 /** Guest cart token, persisted so a reload keeps the bag. */
 let cartToken = readToken();
@@ -142,12 +143,17 @@ function toError(data, status) {
   });
 }
 
-function query(params) {
+function query(params, extras = []) {
   const search = new URLSearchParams();
 
   for (const [key, value] of Object.entries(params)) {
     if (value === undefined || value === null || value === "") continue;
     search.set(key, String(value));
+  }
+
+  for (const [key, value] of extras) {
+    if (value === undefined || value === null || value === "") continue;
+    search.append(key, String(value));
   }
 
   const qs = search.toString();
@@ -179,6 +185,7 @@ const PRODUCT_FIELDS = [
   "images",
   "categories",
   "tags",
+  "brands",
   "attributes",
   "variations",
   "grouped_products",
@@ -196,7 +203,9 @@ const LIST_FIELDS = [
   "is_in_stock",
   "images",
   "categories",
+  "brands",
   "attributes",
+  "stock_availability",
   "prices",
   "price_html",
   "average_rating",
@@ -228,6 +237,7 @@ export async function getProducts({
   search = "",
   category = "",
   categories = "",
+  brand = "",
   tag = "",
   onSale = false,
   featured = false,
@@ -235,16 +245,54 @@ export async function getProducts({
   order = "asc",
   minPrice,
   maxPrice,
-  stockStatus = "",
+  stockStatus = "instock",
   slug = "",
-  include = ""
+  include = "",
+  attribute = "",
+  attributeTermId = ""
 } = {}) {
+  const eanSearch = search.trim().replace(/[\s-]/g, "");
+  if (/^\d{8,14}$/.test(eanSearch)) {
+    const match = await findProductByEan(eanSearch).catch(() => null);
+    if (!match) return { items: [], total: 0, totalPages: 0 };
+
+    const result = await getProducts({
+      page: 1,
+      perPage: 1,
+      include: String(match.id),
+      category,
+      categories,
+      brand,
+      tag,
+      onSale,
+      featured,
+      stockStatus,
+      orderby,
+      order,
+      minPrice,
+      maxPrice,
+      attribute,
+      attributeTermId
+    });
+    return {
+      ...result,
+      items: result.items.map((product) => ({ ...product, ean: match.ean }))
+    };
+  }
+
+  const extras = [];
+  if (attribute && attributeTermId) {
+    extras.push(["attributes[0][attribute]", attribute]);
+    extras.push(["attributes[0][term_id]", String(attributeTermId)]);
+  }
+
   const path = `/products${query({
     page,
     per_page: perPage,
     search,
     category,
     categories,
+    brand,
     tag,
     on_sale: onSale ? "true" : undefined,
     featured: featured ? "true" : undefined,
@@ -256,9 +304,10 @@ export async function getProducts({
     slug,
     include,
     _fields: LIST_FIELDS
-  })}`;
+  }, extras)}`;
 
   const res = await fetch(`${STORE}${path}`, {
+    cache: "no-store",
     headers: { Accept: "application/json" }
   });
 
@@ -288,6 +337,10 @@ function withPriceParts(product) {
       ...category,
       name: decodeEntities(category.name)
     })),
+    brands: (product.brands ?? []).map((brand) => ({
+      ...brand,
+      name: decodeEntities(brand.name)
+    })),
     attributes: (product.attributes ?? []).map((attribute) => ({
       ...attribute,
       name: decodeEntities(attribute.name),
@@ -306,14 +359,39 @@ function withPriceParts(product) {
   };
 }
 
-/** Cart lines carry the same escaped strings as the catalogue. */
-function withDecodedItems(cart) {
+const cartProductSlugs = new Map();
+
+/** Woo cart rows omit the product slug, so resolve product IDs before exposing
+ *  cart links. This keeps the headless product route canonical throughout bag
+ *  and checkout views instead of linking to the numeric ID. */
+async function withDecodedItems(cart) {
   if (!cart?.items?.length) return cart;
+
+  const unresolvedIds = [...new Set(cart.items
+    .filter((item) => !item.slug && !item.product_slug && !cartProductSlugs.has(String(item.id)))
+    .map((item) => Number(item.id))
+    .filter((id) => id > 0))];
+
+  if (unresolvedIds.length) {
+    try {
+      const { items } = await getProducts({
+        include: unresolvedIds.join(","),
+        perPage: unresolvedIds.length,
+        stockStatus: ""
+      });
+      items.forEach((product) => {
+        if (product.slug) cartProductSlugs.set(String(product.id), product.slug);
+      });
+    } catch {
+      // Keep the cart usable if the optional URL lookup fails.
+    }
+  }
 
   return {
     ...cart,
     items: cart.items.map((item) => ({
       ...item,
+      slug: item.slug ?? item.product_slug ?? cartProductSlugs.get(String(item.id)) ?? "",
       name: decodeEntities(item.name),
       variation: (item.variation ?? []).map((entry) => ({
         ...entry,
@@ -332,7 +410,7 @@ function formatMinor(minor, meta) {
 
 /** Fetch a single product by slug. */
 export async function getProductBySlug(slug) {
-  const { items } = await getProducts({ slug, perPage: 1 });
+  const { items } = await getProducts({ slug, perPage: 1, stockStatus: "" });
 
   if (!items.length) throw new WooError("Product not found", { status: 404 });
 
@@ -341,7 +419,13 @@ export async function getProductBySlug(slug) {
 
 /** Fetch the full detail payload for a product id. */
 export async function getProduct(id) {
-  const product = await request(`/products/${id}${query({ _fields: PRODUCT_FIELDS })}`);
+  const [product, catalogMeta] = await Promise.all([
+    request(`/products/${id}${query({ _fields: PRODUCT_FIELDS })}`),
+    getCatalogMetadata([id])
+  ]);
+  if (!catalogMeta.products?.[String(id)]) {
+    throw new WooError("Product not found", { status: 404 });
+  }
   const enriched = withPriceParts(product);
 
   return {
@@ -351,6 +435,24 @@ export async function getProduct(id) {
     shortDescriptionHtml: product.short_description ?? "",
     galleries: resolveGallery(product)
   };
+}
+
+/** Fetch WooCommerce's global unique ID (the product EAN/GTIN). */
+export async function getProductEan(id) {
+  const result = await request(`/cereve/v1/products/${encodeURIComponent(id)}/ean`, { base: WP });
+  return typeof result?.ean === "string" ? result.ean : "";
+}
+
+/** Read supplier shipping metadata and WooCommerce's country directory in one request. */
+export async function getCatalogMetadata(ids = []) {
+  const uniqueIds = [...new Set(ids.map(Number).filter((id) => Number.isInteger(id) && id > 0))];
+  if (!uniqueIds.length) return { products: {}, countries: {} };
+  return request(`/cereve/v1/products/catalog-meta${query({ ids: uniqueIds.slice(0, 100).join(",") })}`, { base: WP });
+}
+
+/** Resolve an exact EAN through WooCommerce's indexed global-unique-ID lookup. */
+async function findProductByEan(ean) {
+  return request(`/cereve/v1/ean/${encodeURIComponent(ean)}`, { base: WP });
 }
 
 /**
@@ -384,12 +486,84 @@ export async function getProductVariations(productId, perPage = 100) {
  * Taxonomy
  * ------------------------------------------------------------------ */
 
-export async function getProductCategories({ perPage = 100, hideEmpty = true } = {}) {
-  const categories = await request(
-    `/products/categories${query({ per_page: perPage, hide_empty: hideEmpty ? "true" : undefined })}`
+async function getCollection(path, params = {}) {
+  const res = await fetch(`${STORE}${path}${query(params)}`, {
+    headers: { Accept: "application/json" },
+    credentials: "include"
+  });
+
+  if (!res.ok) throw toError(await res.json().catch(() => null), res.status);
+
+  const body = await res.json();
+  const items = Array.isArray(body) ? body : [];
+
+  return {
+    items,
+    total: Number(res.headers.get("x-wp-total") ?? items.length),
+    totalPages: Number(res.headers.get("x-wp-totalpages") ?? 1)
+  };
+}
+
+/** Walk Store API pages. Cap so a missing per_page header cannot fire thousands of requests. */
+export async function getAllCollectionPages(path, params = {}) {
+  const perPage = params.per_page ?? 100;
+  const first = await getCollection(path, { ...params, page: 1, per_page: perPage });
+  const pages = Math.min(Math.max(Number(first.totalPages) || 1, 1), 20);
+
+  if (pages <= 1) return first.items;
+
+  const remaining = await Promise.all(
+    Array.from({ length: pages - 1 }, (_, index) =>
+      getCollection(path, { ...params, page: index + 2, per_page: perPage })
+    )
   );
 
-  return Array.isArray(categories) ? categories : [];
+  return [...first.items, ...remaining.flatMap((page) => page.items)];
+}
+
+export async function getProductCategories({ perPage = 100, hideEmpty = true, page = 1 } = {}) {
+  const { items } = await getCollection("/products/categories", {
+    per_page: perPage,
+    page,
+    hide_empty: hideEmpty ? "true" : undefined
+  });
+  return items;
+}
+
+export async function getProductBrands({ perPage = 100, hideEmpty = true, page = 1, search = "" } = {}) {
+  const { items } = await getCollection("/products/brands", {
+    per_page: perPage,
+    page,
+    search,
+    hide_empty: hideEmpty ? "true" : undefined
+  });
+  return items;
+}
+
+export async function getAllProductCategories() {
+  return getAllCollectionPages("/products/categories", { hide_empty: "true" });
+}
+
+/** Category counts for the same in-stock, image-bearing supplier catalogue as product lists. */
+export async function getCatalogCategoryCounts() {
+  return request("/cereve/v1/products/catalog-counts", { base: WP });
+}
+
+export async function getAllProductBrands() {
+  return getAllCollectionPages("/products/brands", { hide_empty: "true" });
+}
+
+export async function getProductAttributes() {
+  const { items } = await getCollection("/products/attributes", { per_page: 100 });
+  return items;
+}
+
+export async function getProductAttributeTerms(attributeId, { hideEmpty = true } = {}) {
+  const { items } = await getCollection(`/products/attributes/${attributeId}/terms`, {
+    per_page: 100,
+    hide_empty: hideEmpty ? "true" : undefined
+  });
+  return items;
 }
 
 export async function getProductTags({ perPage = 100 } = {}) {
@@ -474,7 +648,8 @@ export async function placeOrder({ billingAddress, shippingAddress, paymentMetho
       billing_address: billingAddress,
       shipping_address: shippingAddress,
       payment_method: paymentMethod,
-      customer_note: customerNote
+      customer_note: customerNote,
+      payment_data: []
     }
   });
 }

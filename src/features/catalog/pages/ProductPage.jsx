@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   getProductBySlug,
+  getProductEan,
   getProductVariations,
   getProducts,
   WooError
@@ -13,6 +14,7 @@ import { Price, Stars } from "../../../shared/ui/Price.jsx";
 import QuantityStepper from "../../../shared/ui/QuantityStepper.jsx";
 import ProductCard from "../../../features/catalog/components/ProductCard.jsx";
 import { NoImage, NoImageMark } from "../../../shared/ui/primitives.js";
+import { STORE_NAME } from "../../../shared/lib/branding.js";
 import { Accordion, DisclosureList, EmailCapture } from "../../../shared/ui/Accordion.jsx";
 import { ArrowIcon, CheckIcon, BagIcon, CloseIcon } from "../../../shared/ui/Icons.jsx";
 
@@ -30,6 +32,7 @@ export default function ProductPage() {
   const { open } = useUI();
 
   const [product, setProduct] = useState(null);
+  const [ean, setEan] = useState("");
   const [variations, setVariations] = useState([]);
   const [related, setRelated] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +50,7 @@ export default function ProductPage() {
     setLoading(true);
     setError("");
     setProduct(null);
+    setEan("");
     setSelected({});
     setQuantity(1);
     setActiveImage(0);
@@ -56,17 +60,19 @@ export default function ProductPage() {
       .then(async (found) => {
         if (!alive) return;
         setProduct(found);
+        getProductEan(found.id)
+          .then((value) => alive && setEan(value))
+          .catch(() => {});
 
         if (found.type === "variable") {
           const list = await getProductVariations(found.id);
           if (alive) setVariations(list);
         }
 
-        const categorySlug = found.categories?.[0]?.slug;
+        const categoryId = found.categories?.[0]?.id;
         const { items } = await getProducts({
-          category: categorySlug,
-          perPage: 5,
-          exclude: undefined
+          category: categoryId,
+          perPage: 5
         });
 
         if (alive) setRelated(items.filter((item) => item.id !== found.id).slice(0, 4));
@@ -88,6 +94,13 @@ export default function ProductPage() {
 
     return product.attributes
       .filter((attribute) => attribute.terms?.length)
+      // Only attributes with multiple actual variation values are purchase
+      // choices. Other attributes (including Volume) are product facts.
+      .filter((attribute) => product.type === "variable" && new Set(
+        variations
+          .map((variation) => attributeSlugFor(variation, attribute.taxonomy ?? attribute.name))
+          .filter(Boolean)
+      ).size > 1)
       .map((attribute) => {
         const variationsForTerm = new Map();
 
@@ -148,6 +161,7 @@ export default function ProductPage() {
 
   const activePrice = match?.priceParts ? { ...product, priceParts: match.priceParts, prices: match.prices ?? product.prices } : product;
   const activeStock = match ? match.is_in_stock : product?.is_in_stock;
+  const productFacts = (product?.attributes ?? []).filter((attribute) => attribute.terms?.length);
 
   async function handleAdd() {
     if (!canBuy || adding) return;
@@ -204,7 +218,15 @@ export default function ProductPage() {
           <span aria-current="page">{product.name}</span>
         </nav>
 
-        <div className="pdp__layout">
+        <div className="pdp__layout pdp__layout--details">
+          <header className="pdp__heading">
+            <h1 className="hdr-sm pdp__title">{product.name}</h1>
+            <div className="pdp__meta">
+              <Price product={activePrice} size="lg" />
+              {product.review_count ? <Stars rating={product.average_rating} count={product.review_count} /> : null}
+            </div>
+          </header>
+
           <section className="pdp__gallery" aria-label="Product images">
             <div className="pdp__stage">
               {gallery[activeImage] ? (
@@ -215,7 +237,7 @@ export default function ProductPage() {
                 />
               ) : (
                 <NoImage>
-                  <NoImageMark>Cereve</NoImageMark>
+                  <NoImageMark>{STORE_NAME}</NoImageMark>
                 </NoImage>
               )}
 
@@ -243,18 +265,22 @@ export default function ProductPage() {
           </section>
 
           <section className="pdp__info">
-            <h1 className="hdr-sm pdp__title">{product.name}</h1>
-
-            <div className="pdp__meta">
-              <Price product={activePrice} size="lg" />
-              {product.review_count ? <Stars rating={product.average_rating} count={product.review_count} /> : null}
-            </div>
-
             {product.shortDescriptionHtml ? (
               <div
                 className="pdp__short body-sm"
                 dangerouslySetInnerHTML={{ __html: product.shortDescriptionHtml }}
               />
+            ) : null}
+
+            {productFacts.length ? (
+              <dl className="pdp__facts body-sm">
+                {productFacts.map((attribute) => (
+                  <div key={attribute.id ?? attribute.name}>
+                    <dt>{attribute.name}</dt>
+                    <dd>{attribute.terms.map((term) => term.name).join(", ")}</dd>
+                  </div>
+                ))}
+              </dl>
             ) : null}
 
             {/* Option groups */}
@@ -371,14 +397,19 @@ export default function ProductPage() {
 
               <Accordion title="Ingredients">
                 <p>
-                  Every Cereve formula is reviewed for ingredient compatibility and
-                  is never tested on animals. Full ingredient lists are printed on
-                  each product page and on every carton.
+                  Full ingredient lists are printed on each product page. Vendor
+                  formulations are shown as supplied; always check the carton if
+                  you have an allergy.
                 </p>
               </Accordion>
             </div>
 
             <div className="pdp__skumeta body-xs muted">
+              {ean ? (
+                <p>
+                  <strong>EAN:</strong> {ean}
+                </p>
+              ) : null}
               {product.sku ? (
                 <p>
                   <strong>SKU:</strong> {product.sku}
@@ -387,7 +418,12 @@ export default function ProductPage() {
               {product.categories?.length ? (
                 <p>
                   <strong>Category:</strong>{" "}
-                  {product.categories.map((category) => category.name).join(", ")}
+                  {product.categories.map((category, index) => (
+                    <span key={category.id}>
+                      {index ? ", " : ""}
+                      <Link to={`/shop/${category.slug}`}>{category.name}</Link>
+                    </span>
+                  ))}
                 </p>
               ) : null}
             </div>

@@ -74,24 +74,49 @@ export function useUI() {
   return context;
 }
 
-/** Freeze background scroll while an overlay owns the viewport. */
+let bodyLockCount = 0;
+let bodyUnlockFrame = 0;
+let lockedBody = null;
+let savedBodyStyles = null;
+
+/** Freeze background scroll while any overlay owns the viewport. */
 export function useBodyLock(active) {
   useEffect(() => {
     if (!active) return undefined;
 
-    const { body } = document;
-    const previousOverflow = body.style.overflow;
-    const previousPadding = body.style.paddingRight;
-    const scrollbar = window.innerWidth - document.documentElement.clientWidth;
+    if (bodyUnlockFrame) {
+      window.cancelAnimationFrame(bodyUnlockFrame);
+      bodyUnlockFrame = 0;
+    }
 
-    body.style.overflow = "hidden";
-    if (scrollbar > 0) body.style.paddingRight = `${scrollbar}px`;
-    body.classList.add("is-locked");
+    if (bodyLockCount === 0) {
+      lockedBody = document.body;
+      savedBodyStyles = {
+        overflow: lockedBody.style.overflow,
+        paddingRight: lockedBody.style.paddingRight
+      };
+      const scrollbar = window.innerWidth - document.documentElement.clientWidth;
+      lockedBody.style.overflow = "hidden";
+      if (scrollbar > 0) lockedBody.style.paddingRight = `${scrollbar}px`;
+      lockedBody.classList.add("is-locked");
+    }
+    bodyLockCount += 1;
 
     return () => {
-      body.style.overflow = previousOverflow;
-      body.style.paddingRight = previousPadding;
-      body.classList.remove("is-locked");
+      bodyLockCount = Math.max(0, bodyLockCount - 1);
+      if (bodyLockCount !== 0) return;
+
+      // Menu → search is one overlay handoff. Defer unlocking by one frame so
+      // the incoming panel can acquire the lock without a scroll jump.
+      bodyUnlockFrame = window.requestAnimationFrame(() => {
+        bodyUnlockFrame = 0;
+        if (bodyLockCount !== 0 || !lockedBody || !savedBodyStyles) return;
+        lockedBody.style.overflow = savedBodyStyles.overflow;
+        lockedBody.style.paddingRight = savedBodyStyles.paddingRight;
+        lockedBody.classList.remove("is-locked");
+        lockedBody = null;
+        savedBodyStyles = null;
+      });
     };
   }, [active]);
 }

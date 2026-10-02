@@ -59,6 +59,7 @@ import {
   BunnyIcon,
   AccessibilityIcon
 } from "../../../shared/ui/Icons.jsx";
+import { STORE_NAME } from "../../../shared/lib/branding.js";
 
 /**
  * Footer.
@@ -75,10 +76,8 @@ const COLUMNS = [
     links: [
       { label: "Bestsellers", to: "/shop?sort=popularity" },
       { label: "All Products", to: "/shop" },
-      { label: "Gifts + Sets", to: "/shop?tag=Gift" },
-      { label: "Gift Cards", to: "/shop?tag=Gift+Card" },
-      { label: "Find a Store", to: "/help" },
-      { label: "Rewards", to: "/help" }
+      { label: "Brands", to: "/brands" },
+      { label: "Gifts", to: "/shop/gifts" }
     ]
   },
   {
@@ -96,11 +95,7 @@ const COLUMNS = [
     heading: "About",
     links: [
       { label: "About Us", to: "/about" },
-      { label: "Sustainability", to: "/about" },
-      { label: "Careers", to: "/about" },
-      { label: "Affiliates", to: "/about" },
-      { label: "Press", to: "/about" },
-      { label: "Clean at Cereve", to: "/about" }
+      { label: "Help", to: "/help" },
     ]
   },
   {
@@ -149,7 +144,7 @@ export default function Footer() {
       <Mission>
         <Container>
           <MissionInner>
-            <MissionTitle as={H2}>Makeup That Makes Your Skin Better™</MissionTitle>
+            <MissionTitle as={H2}>Thousands of brands. One checkout.</MissionTitle>
 
             <MissionBody as={BodyMd}>
               We believe clean beauty is thoughtful beauty—with carefully-selected
@@ -234,7 +229,7 @@ export default function Footer() {
       <FooterLegal>
         <Container>
           <FooterLegalInner>
-            <BodyXs as="p">©{year} Cereve. All rights reserved.</BodyXs>
+            <BodyXs as="p">©{year} {STORE_NAME}. All rights reserved.</BodyXs>
 
             <FooterLegalLinks>
               {LEGAL.map((item) => (

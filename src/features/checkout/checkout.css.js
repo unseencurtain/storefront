@@ -177,6 +177,49 @@ export const Field = styled.div`
   position: relative;
 `;
 
+export const CountryOptions = styled.div`
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: min(264px, 38vh);
+  overflow-y: auto;
+  padding: 5px;
+  border: 1px solid ${({ theme: t }) => t.color.tan};
+  border-radius: 12px;
+  background: ${({ theme: t }) => t.color.white};
+  box-shadow: 0 12px 28px rgba(36, 30, 28, 0.14);
+`;
+
+export const CountryOption = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 11px;
+  border: 0;
+  border-radius: 8px;
+  background: ${({ theme: t, $active }) => ($active ? t.color.grey200 : "transparent")};
+  color: ${({ theme: t }) => t.color.cocoa};
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover, &:focus-visible {
+    outline: none;
+    background: ${({ theme: t }) => t.color.grey200};
+  }
+`;
+
+export const CountryCode = styled.span`
+  margin-left: 12px;
+  color: ${({ theme: t }) => t.color.grey400};
+  font-size: 0.82em;
+  letter-spacing: 0.04em;
+`;
+
 /** The label is still announced to screen readers; the placeholder carries the
  *  visible text inside the control, so it must not be laid out. */
 export const FieldLabel = styled(SrOnly).attrs({ as: "label" })``;
@@ -556,8 +599,8 @@ export const SummaryItems = styled.ul`
   gap: 16px;
   max-height: 340px;
   overflow-y: auto;
-  padding-right: 4px;
-  margin: 0;
+  padding: 8px 8px 8px 0;
+  margin: -8px 0;
   list-style: none;
 `;
 
@@ -587,6 +630,7 @@ export const SummaryQty = styled.span`
   position: absolute;
   top: -8px;
   right: -8px;
+  z-index: 1;
   min-width: 20px;
   height: 20px;
   display: inline-flex;
