@@ -7,6 +7,21 @@ import { ArrowIcon, BagIcon, SearchIcon, CheckIcon, StarIcon } from "../../../sh
 import { EmailCapture } from "../../../shared/ui/Accordion.jsx";
 
 /** Editorial home: hero statement, category rail, featured grid, journal band. */
+const MARQUEE_BRANDS = [
+  "Dior",
+  "Chanel",
+  "Nivea",
+  "L'Oreal",
+  "Maybelline",
+  "Clarins",
+  "CeraVe",
+  "Revlon",
+  "Shiseido",
+  "Clinique",
+  "Vichy",
+  "Garnier"
+];
+
 export default function Home() {
   const { roots } = useCategories();
   const [featured, setFeatured] = useState([]);
@@ -67,7 +82,7 @@ export default function Home() {
           <div className="hero__marqueetrack">
             {Array.from({ length: 4 }, (_, group) => (
               <span key={group} className="hero__marqueegroup">
-                {["Thousands of brands", "EU shipping", "Pharmacy & prestige", "Secure checkout", "Easy returns"].map(
+                {MARQUEE_BRANDS.map(
                   (item) => (
                     <span key={item} className="hero__marqueeitem">
                       {item}
