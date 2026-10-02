@@ -599,8 +599,8 @@ export const SummaryItems = styled.ul`
   gap: 16px;
   max-height: 340px;
   overflow-y: auto;
-  padding-right: 4px;
-  margin: 0;
+  padding: 8px 8px 8px 0;
+  margin: -8px 0;
   list-style: none;
 `;
 
@@ -630,6 +630,7 @@ export const SummaryQty = styled.span`
   position: absolute;
   top: -8px;
   right: -8px;
+  z-index: 1;
   min-width: 20px;
   height: 20px;
   display: inline-flex;
