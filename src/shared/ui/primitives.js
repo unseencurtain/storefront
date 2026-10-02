@@ -129,7 +129,7 @@ export const SrOnly = styled.span`
 
 /** A bare <button> inside a <form> defaults to type="submit", which silently
  *  submits the form. Opt in with type="submit" where that is wanted. */
-export const Button = styled.button.attrs({ type: "button" })`
+export const Button = styled.button.attrs(({ type = "button" }) => ({ type }))`
   display: inline-flex;
   align-items: center;
   justify-content: center;

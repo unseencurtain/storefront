@@ -9,10 +9,12 @@ import { ArrowIcon, BagIcon, CheckIcon } from "../../../shared/ui/Icons.jsx";
 import { Button, ContainerInset, StateMsg, SubSm, SubXs } from "../../../shared/ui/primitives.js";
 import { CartLine } from "../components/CartLine.jsx";
 import { Ledger } from "../components/Ledger.jsx";
+import { CartCoupon } from "../components/CartCoupon.jsx";
 import { FREE_SHIPPING_AT, ASSURANCE } from "../constants.js";
 import {
   CartPage as CartPageShell,
   CartPageTitle,
+  CartMain,
   EmptyBag,
   EmptyRecs,
   LineList,
@@ -57,24 +59,27 @@ export default function CartPage() {
         </CartPageTitle>
 
         {isEmpty ? (
-          <EmptyBag $page>
-            <BagIcon size={30} />
-            <SubSm>Your bag is empty.</SubSm>
-            <Button as={Link} to="/shop">
-              Shop All
-            </Button>
-
-            {suggestions.length ? (
-              <EmptyRecs>
-                <SubXs $muted>Best sellers</SubXs>
-                {suggestions.map((product) => (
-                  <MiniRow key={product.id} product={product} />
-                ))}
-              </EmptyRecs>
-            ) : null}
-          </EmptyBag>
-        ) : (
           <>
+            <EmptyBag $page>
+              <BagIcon size={30} />
+              <SubSm>Your bag is empty.</SubSm>
+              <Button as={Link} to="/shop">
+                Shop All
+              </Button>
+
+              {suggestions.length ? (
+                <EmptyRecs>
+                  <SubXs $muted>Best sellers</SubXs>
+                  {suggestions.map((product) => (
+                    <MiniRow key={product.id} product={product} />
+                  ))}
+                </EmptyRecs>
+              ) : null}
+            </EmptyBag>
+            <CartCoupon />
+          </>
+        ) : (
+          <CartMain>
             <LineList>
               {cart.items.map((item) => (
                 <CartLine
@@ -89,7 +94,9 @@ export default function CartPage() {
             <PageSummary>
               <Ledger cart={cart} showEstimate />
 
-              <PageNote>Discount codes can be applied at checkout.</PageNote>
+              <CartCoupon />
+
+              <PageNote>Discount codes are applied to your bag total.</PageNote>
 
               <PageActions>
                 <Button as={Link} to="/checkout" $large $block>
@@ -116,7 +123,7 @@ export default function CartPage() {
                 ))}
               </Perks>
             </PageSummary>
-          </>
+          </CartMain>
         )}
       </ContainerInset>
     </CartPageShell>
