@@ -66,7 +66,7 @@ export default function Home() {
         <div className="hero__marquee" aria-hidden="true">
           <div className="hero__marqueetrack">
             {Array.from({ length: 2 }, (_, group) => (
-              <span key={group} className="hero__marqueegroup">
+              <span key={group}>
                 {["Thousands of brands", "EU shipping", "Pharmacy & prestige", "Secure checkout", "Easy returns"].map(
                   (item) => (
                     <span key={item} className="hero__marqueeitem">
