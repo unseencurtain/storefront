@@ -90,8 +90,7 @@ export default function Header({ onOpenSearch, onOpenMenu, onOpenCart }) {
     return [
       { id: "all", label: "Shop All", kind: "all", href: "/shop" },
       ...primary,
-      { id: "brands", label: "Brands", kind: "brands", href: "/brands" },
-      { id: "sale", label: "Sale", kind: "sale", href: "/shop?on_sale=1" }
+      { id: "brands", label: "Brands", kind: "brands", href: "/brands" }
     ];
   }, [departments]);
 
@@ -387,7 +386,6 @@ function buildColumns(item, departments = []) {
         links: [
           { label: "View everything", href: "/shop" },
           { label: "Bestsellers", href: "/shop?sort=popularity" },
-          { label: "On sale", href: "/shop?on_sale=1" },
           { label: "All brands", href: "/brands" }
         ]
       },

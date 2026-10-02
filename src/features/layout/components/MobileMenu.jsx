@@ -103,7 +103,6 @@ export default function MobileMenu({ onOpenSearch, onOpenCart }) {
           <MenuNav aria-label="Mobile">
             <NavRow label="Shop All" to="/shop" onNavigate={close} strong />
             <NavRow label="Brands" to="/brands" onNavigate={close} strong />
-            <NavRow label="Sale" to="/shop?on_sale=1" onNavigate={close} />
 
             {menuRoots.map((category) => (
               <div key={category.id}>

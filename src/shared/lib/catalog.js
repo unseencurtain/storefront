@@ -35,6 +35,7 @@ export const PRIMARY_DEPARTMENT_NAV = [
   { label: "Makeup", slug: "makeup", aliases: ["makeup"] },
   { label: "Fragrance", slug: "fragrance", aliases: ["fragrance", "fragance"] },
   { label: "Skin Care", slug: "skin-care", aliases: ["skincare"] },
+  { label: "Women", slug: "women", aliases: ["women", "woman", "damen"] },
   { label: "Men", slug: "men", aliases: ["men", "mens"] }
 ];
 
@@ -45,7 +46,7 @@ export function primaryDepartments(departments = []) {
     const category = departments.find((item) =>
       entry.aliases.includes(termKey(item.slug)) || entry.aliases.includes(termKey(item.name))
     );
-    return category ?? {
+    return category ? { ...category, name: entry.label } : {
       id: `nav-${entry.slug}`,
       name: entry.label,
       slug: entry.slug,

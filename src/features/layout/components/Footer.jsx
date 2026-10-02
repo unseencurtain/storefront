@@ -77,7 +77,6 @@ const COLUMNS = [
       { label: "Bestsellers", to: "/shop?sort=popularity" },
       { label: "All Products", to: "/shop" },
       { label: "Brands", to: "/brands" },
-      { label: "On sale", to: "/shop?on_sale=1" },
       { label: "Gifts", to: "/shop/gifts" }
     ]
   },
