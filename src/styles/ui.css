@@ -364,24 +364,7 @@
   height: 32px;
 }
 
-/* ---- Badges / tags ----------------------------------------- */
-
-.badge {
-  display: inline-block;
-  padding: 6px 10px;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1.4;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  background: var(--c-cocoa);
-  color: var(--c-white);
-}
-
-.badge--light {
-  background: var(--c-dawn-pink);
-  color: var(--c-cocoa);
-}
+/* ---- Tags --------------------------------------------------- */
 
 .tag {
   display: inline-block;

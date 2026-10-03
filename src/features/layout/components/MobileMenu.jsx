@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useUI, useBodyLock } from "../../../shared/UIContext.jsx";
 import { useCategories, primaryDepartments } from "../../../shared/lib/catalog.js";
@@ -20,17 +20,11 @@ import {
   DrawerFoot,
   MenuSearch,
   MenuNav,
-  MenuRow,
   MenuLink,
-  MenuToggle,
-  MenuSub,
-  MenuSubList,
-  MenuSubLink,
   MenuUtils,
   MenuSocial,
   MenuSocialLink
 } from "./chrome.js";
-import { AccordionIcon } from "../../../shared/ui/primitives.js";
 import { STORE_NAME } from "../../../shared/lib/branding.js";
 import { SOCIALS } from "./Footer.jsx";
 
@@ -46,15 +40,9 @@ export default function MobileMenu({ onOpenSearch, onOpenCart }) {
   const open = isOpen("menu");
   const { roots } = useCategories();
   const menuRoots = primaryDepartments(roots);
-  const [expanded, setExpanded] = useState(null);
   const panelRef = useRef(null);
 
   useBodyLock(open);
-
-  // Start collapsed each time the drawer is opened.
-  useEffect(() => {
-    if (open) setExpanded(null);
-  }, [open]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -105,33 +93,7 @@ export default function MobileMenu({ onOpenSearch, onOpenCart }) {
             <NavRow label="Brands" to="/brands" onNavigate={close} strong />
 
             {menuRoots.map((category) => (
-              <div key={category.id}>
-                <NavRow
-                  label={category.name}
-                  to={category.href}
-                  onNavigate={close}
-                  expanded={expanded === category.id}
-                  onToggle={() =>
-                    setExpanded((current) => (current === category.id ? null : category.id))
-                  }
-                />
-
-                {category.children?.length ? (
-                  <MenuSub $open={expanded === category.id}>
-                    <li>
-                      <MenuSubList>
-                        {category.children.map((child) => (
-                          <li key={child.id}>
-                            <MenuSubLink as={Link} to={child.href} onClick={close}>
-                              {child.name}
-                            </MenuSubLink>
-                          </li>
-                        ))}
-                      </MenuSubList>
-                    </li>
-                  </MenuSub>
-                ) : null}
-              </div>
+              <NavRow key={category.id} label={category.name} to={category.href} onNavigate={close} />
             ))}
 
             <NavRow label="Bestsellers" to="/shop?sort=popularity" onNavigate={close} />
@@ -182,30 +144,11 @@ export default function MobileMenu({ onOpenSearch, onOpenCart }) {
   );
 }
 
-function NavRow({ label, to, onNavigate, expanded, onToggle, strong }) {
-  if (!onToggle) {
-    return (
-      <MenuLink as={Link} to={to} onClick={onNavigate} $strong={strong}>
-        {label}
-      </MenuLink>
-    );
-  }
-
+function NavRow({ label, to, onNavigate, strong }) {
   return (
-    <MenuRow>
-      <MenuLink as={Link} to={to} onClick={onNavigate} $strong={strong}>
-        {label}
-      </MenuLink>
-
-      <MenuToggle
-        type="button"
-        onClick={onToggle}
-        aria-expanded={expanded}
-        aria-label={`${expanded ? "Collapse" : "Expand"} ${label}`}
-      >
-        <AccordionIcon $open={expanded} aria-hidden="true" />
-      </MenuToggle>
-    </MenuRow>
+    <MenuLink as={Link} to={to} onClick={onNavigate} $strong={strong}>
+      {label}
+    </MenuLink>
   );
 }
 

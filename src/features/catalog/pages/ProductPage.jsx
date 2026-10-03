@@ -13,7 +13,7 @@ import { isShade, shadeColor, discountPercent } from "../../../shared/lib/format
 import { Price, Stars } from "../../../shared/ui/Price.jsx";
 import QuantityStepper from "../../../shared/ui/QuantityStepper.jsx";
 import ProductCard from "../../../features/catalog/components/ProductCard.jsx";
-import { NoImage, NoImageMark } from "../../../shared/ui/primitives.js";
+import { Badge, NoImage, NoImageMark } from "../../../shared/ui/primitives.js";
 import { STORE_NAME } from "../../../shared/lib/branding.js";
 import { Accordion, DisclosureList, EmailCapture } from "../../../shared/ui/Accordion.jsx";
 import { ArrowIcon, CheckIcon, BagIcon, CloseIcon } from "../../../shared/ui/Icons.jsx";
@@ -241,7 +241,7 @@ export default function ProductPage() {
                 </NoImage>
               )}
 
-              {soldOut ? <span className="badge pdp__flag">Sold out</span> : null}
+              {soldOut ? <Badge className="pdp__flag">Sold out</Badge> : null}
             </div>
 
             {gallery.length > 1 ? (

@@ -115,7 +115,8 @@
 }
 
 .card__title a:hover {
-  opacity: 0.7;
+  opacity: 1;
+  color: inherit;
 }
 
 .card__variants {
@@ -245,7 +246,7 @@
 }
 
 .crumbs a:hover {
-  color: var(--c-cocoa);
+  color: inherit;
 }
 
 .crumbs [aria-current="page"] {

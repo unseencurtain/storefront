@@ -124,10 +124,16 @@ export const DrawerFoot = styled.div`
       gap: 14px 16px;
       padding: 20px 24px;
 
-      ${mq.lg} {
-        padding: 20px 16px;
-      }
-    `}
+       ${mq.lg} {
+         padding: 20px 16px;
+       }
+
+       @media (max-width: 480px) {
+         flex-direction: column;
+         align-items: stretch;
+         gap: 12px;
+       }
+     `}
 `;
 
 /* ---- Top announcement bar ------------------------------------ */
@@ -668,6 +674,10 @@ export const MenuUtils = styled.ul`
   display: flex;
   flex: 0 0 auto;
   gap: 20px;
+
+  @media (max-width: 480px) {
+    justify-content: flex-start;
+  }
 `;
 
 export const MenuSocial = styled.ul`
@@ -676,6 +686,12 @@ export const MenuSocial = styled.ul`
   gap: 14px;
   /* Stays hard right when the foot wraps onto two rows on a narrow phone. */
   margin-left: auto;
+
+  @media (max-width: 480px) {
+    justify-content: space-between;
+    width: 100%;
+    margin-left: 0;
+  }
 `;
 
 export const MenuSocialLink = styled.a`

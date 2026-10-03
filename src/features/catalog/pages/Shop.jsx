@@ -7,15 +7,6 @@ import { ChevronIcon, CloseIcon, ArrowIcon } from "../../../shared/ui/Icons.jsx"
 
 const PER_PAGE = 24;
 
-const SORTS = [
-  { value: "menu_order-asc", label: "Featured" },
-  { value: "popularity-desc", label: "Most popular" },
-  { value: "date-desc", label: "Newest" },
-  { value: "price-asc", label: "Price, low to high" },
-  { value: "price-desc", label: "Price, high to low" },
-  { value: "title-asc", label: "Alphabetical" }
-];
-
 /**
  * Collection / product listing.
  *
@@ -180,21 +171,6 @@ export default function Shop() {
             <ChevronIcon size={12} direction="down" />
           </button>
 
-          <label className="shop__sort">
-            <span className="sr-only">Sort products by</span>
-            <select
-              className="shop__sortselect"
-              value={sort}
-              onChange={(event) => update([["sort", event.target.value]])}
-            >
-              {SORTS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <ChevronIcon size={12} direction="down" />
-          </label>
         </div>
 
         <div className="shop__layout">
@@ -346,24 +322,6 @@ function FilterPanel({ departments, brands, current, currentBrand, params, onUpd
               </button>
             </li>
           ))}
-        </ul>
-      </div>
-
-      <div className="filters__group">
-        <p className="sub-xs filters__label">Availability</p>
-        <ul>
-          <li>
-            <button
-              type="button"
-              className="filters__link"
-              data-active={params.get("on_sale") === "1" || undefined}
-              onClick={() =>
-                onUpdate([["on_sale", params.get("on_sale") === "1" ? null : "1"]])
-              }
-            >
-              On sale only
-            </button>
-          </li>
         </ul>
       </div>
 
