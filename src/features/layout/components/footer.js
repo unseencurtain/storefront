@@ -1,10 +1,10 @@
 import styled, { css } from "styled-components";
 import { mq } from "../../../shared/styles/theme.js";
-import { SubSm } from "../../../shared/ui/primitives.js";
+import { AccordionContent, AccordionTrigger, SubSm } from "../../../shared/ui/primitives.js";
 
 /**
- * Footer bands: mission panel, main footer (link columns + commitments +
- * newsletter), locale row, legal strip.
+ * Footer bands: mission panel, main footer (link columns + newsletter), locale
+ * row, legal strip.
  *
  * The link columns are one component rendered twice — a grid on desktop, an
  * accordion below 1024px — so the column and link styles are shared and only
@@ -40,16 +40,55 @@ export const MissionBody = styled.p`
   color: ${({ theme: t }) => t.color.kabul};
 `;
 
+/* ---- Client identity ----------------------------------------- */
+
+export const FooterClient = styled.div`
+  min-width: 0;
+`;
+
+export const ClientBrand = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+`;
+
+export const ClientMark = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid ${({ theme: t }) => t.color.announcement};
+  color: ${({ theme: t }) => t.color.announcement};
+  font-family: ${({ theme: t }) => t.font.serif};
+  font-size: 20px;
+`;
+
+export const ClientCopy = styled.p`
+  max-width: 42ch;
+  margin-bottom: 20px;
+  color: ${({ theme: t }) => t.color.kabul};
+`;
+
+export const ClientAddress = styled.p`
+  color: ${({ theme: t }) => t.color.kabul};
+`;
+
 /* ---- Main footer -------------------------------------------- */
 
 export const FooterMain = styled.div`
   background: ${({ theme: t }) => t.color.dawnPink};
-  padding-block: 64px;
+  padding-block: 56px;
+
+  ${mq.lg} {
+    padding-block: 32px;
+  }
 `;
 
 export const FooterMainInner = styled.div`
   display: grid;
-  grid-template-columns: minmax(0, 1.7fr) auto minmax(0, 260px);
+  grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.6fr) minmax(280px, 360px);
   gap: 56px;
   align-items: start;
 
@@ -61,7 +100,7 @@ export const FooterMainInner = styled.div`
 
 export const FooterNavDesktop = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 32px 24px;
 
   ${mq.lg} {
@@ -74,6 +113,7 @@ export const FooterNavMobile = styled.div`
 
   ${mq.lg} {
     display: block;
+    margin-bottom: 32px;
   }
 `;
 
@@ -82,6 +122,20 @@ export const FooterNavColumn = styled.nav`
     display: flex;
     flex-direction: column;
     gap: 16px;
+  }
+
+  ${mq.lg} {
+    padding: 14px 0 18px;
+    border-top: 1px solid rgba(39, 31, 31, 0.16);
+
+    h3 {
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+
+    ul {
+      gap: 10px;
+    }
   }
 `;
 
@@ -105,6 +159,15 @@ export const FooterNavLink = styled.a`
 export const FooterAccordionRoot = styled.div`
   ${mq.lg} {
     border-top: 1px solid rgba(39, 31, 31, 0.16);
+
+    ${AccordionTrigger} {
+      padding-block: 14px;
+      font-size: 13px;
+    }
+
+    ${AccordionContent} {
+      padding-bottom: 14px;
+    }
   }
 `;
 
@@ -112,8 +175,8 @@ export const FooterAccordionList = styled.ul`
   ${mq.lg} {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding-bottom: 20px;
+    gap: 10px;
+    padding: 4px 0 14px;
   }
 `;
 
@@ -156,10 +219,17 @@ export const FooterNews = styled.div`
   }
 
   ${mq.lg} {
-    padding: 48px 16px;
+    padding: 32px 16px;
     margin-inline: -16px;
     background: rgba(39, 31, 31, 0.04);
   }
+`;
+
+export const FooterNewsSocial = styled.ul`
+  display: flex;
+  gap: 16px;
+  margin-top: 24px;
+  color: ${({ theme: t }) => t.color.cocoa};
 `;
 
 /* ---- Locale row --------------------------------------------- */
@@ -215,11 +285,13 @@ export const FooterLegalInner = styled.div`
   justify-content: space-between;
   gap: 24px;
   flex-wrap: wrap;
-  padding-block: 32px;
+  padding-block: 20px;
 
   ${mq.lg} {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    gap: 12px;
+    padding-block: 18px;
   }
 `;
 
@@ -229,7 +301,7 @@ export const FooterLegalLinks = styled.ul`
   gap: 8px 16px;
 
   ${mq.lg} {
-    justify-content: flex-start;
+    justify-content: center;
   }
 
   li {

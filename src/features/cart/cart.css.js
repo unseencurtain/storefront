@@ -460,6 +460,23 @@ export const PageSummary = styled.div`
   margin-top: 32px;
   padding-top: 24px;
   border-top: 1px solid ${({ theme: t }) => t.color.grey200};
+
+  ${mq.lg} {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+`;
+
+export const CartMain = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  align-items: start;
+  gap: 64px;
+
+  ${mq.lg} {
+    display: block;
+  }
 `;
 
 export const PageNote = styled(BodySm)`

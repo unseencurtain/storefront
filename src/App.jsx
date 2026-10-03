@@ -58,6 +58,14 @@ export default function App() {
 
                 <Route path="about" element={<ContentPage />} />
                 <Route path="help" element={<ContentPage />} />
+                <Route path="privacy-policy" element={<ContentPage />} />
+                <Route path="terms-and-conditions" element={<ContentPage />} />
+                <Route path="refund-and-returns" element={<ContentPage />} />
+                <Route path="payment-terms" element={<ContentPage />} />
+                <Route path="order-tracking" element={<ContentPage />} />
+                <Route path="contact" element={<ContentPage />} />
+                <Route path="faq" element={<ContentPage />} />
+                <Route path="category-descriptions" element={<ContentPage />} />
 
                 <Route path="collection/:slug" element={<ShopRoute />} />
                 <Route path="bags" element={<Navigate to="/cart" replace />} />

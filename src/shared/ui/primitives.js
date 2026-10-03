@@ -129,7 +129,7 @@ export const SrOnly = styled.span`
 
 /** A bare <button> inside a <form> defaults to type="submit", which silently
  *  submits the form. Opt in with type="submit" where that is wanted. */
-export const Button = styled.button.attrs({ type: "button" })`
+export const Button = styled.button.attrs(({ type = "button" }) => ({ type }))`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -534,10 +534,12 @@ export const AccordionIcon = styled.span`
 export const AccordionPanel = styled.div`
   display: grid;
   grid-template-rows: ${({ $open }) => ($open ? "1fr" : "0fr")};
+  visibility: ${({ $open }) => ($open ? "visible" : "hidden")};
   transition: grid-template-rows 250ms ${({ theme: t }) => t.motion.ease};
 
   > div {
     overflow: hidden;
+    min-height: 0;
   }
 `;
 

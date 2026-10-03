@@ -161,7 +161,7 @@ export default function Home() {
           {[
             { title: "Huge catalogue", body: "Tens of thousands of SKUs across makeup, skincare, hair and fragrance." },
             { title: "Shop by brand", body: "Jump to any of two thousand brands from the menu or the filter." },
-            { title: "Easy returns", body: "Thirty days to change your mind." }
+            { title: "Easy returns", body: "Fourteen days to change your mind." }
           ].map((item) => (
             <div key={item.title} className="promise">
               <CheckIcon size={18} />

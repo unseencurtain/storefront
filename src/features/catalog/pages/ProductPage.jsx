@@ -369,7 +369,7 @@ export default function ProductPage() {
 
             {!soldOut ? (
               <ul className="pdp__perks">
-                {["Free shipping over $75", "30-day returns", "Cruelty free"].map((perk) => (
+                {["Free shipping over $75", "14-day returns", "Cruelty free"].map((perk) => (
                   <li key={perk}>
                     <CheckIcon size={14} />
                     {perk}
@@ -390,8 +390,14 @@ export default function ProductPage() {
 
               <Accordion title="Shipping + Returns">
                 <p>
-                  Orders ship within 1–2 business days. Free standard shipping on
-                  orders over $75. Returns accepted within 30 days of delivery.
+                  Orders typically arrive within 1–3 business days in the
+                  Netherlands and 3–7 business days across the EU. Returns are
+                  accepted within 14 days, provided the item is unused and its
+                  hygiene seal is intact.
+                </p>
+                <p>
+                  <Link to="/order-tracking">Track an order</Link> or read our{" "}
+                  <Link to="/refund-and-returns">Refund &amp; Returns Policy</Link>.
                 </p>
               </Accordion>
 
@@ -459,11 +465,11 @@ export default function ProductPage() {
             },
             {
               question: "When will my order arrive?",
-              answer: "Standard delivery takes 3–5 business days. You will get a tracking link by email as soon as the parcel leaves the studio."
+              answer: "Delivery typically takes 1–3 business days in the Netherlands and 3–7 business days across the EU. You will get a tracking link by email as soon as the parcel leaves the studio."
             },
             {
               question: "What if it isn't right for me?",
-              answer: "Send it back within 30 days for a full refund. We cover the return label, and refunds land 3–5 days after we receive the parcel."
+              answer: "Send unused, unsealed items back within 14 days of delivery. Return shipping is generally paid by the customer, and refunds are issued within 14 days of receiving the return."
             }
           ]}
         />

@@ -134,6 +134,97 @@ const GlobalStyle = createGlobalStyle`
     animation: ${({ theme: t }) => `cereve-fade ${t.motion.base} ${t.motion.ease} both`};
   }
 
+  /* Editorial/legal pages share a readable measure on desktop and mobile. */
+  .content-page {
+    padding-block: 48px 88px;
+  }
+
+  .container-narrow {
+    width: min(100% - 64px, 760px);
+    margin-inline: auto;
+  }
+
+  .content-page__title {
+    margin: 28px 0 40px;
+  }
+
+  .content-page__body {
+    color: ${({ theme: t }) => t.color.kabul};
+  }
+
+  .content-page__body .prose > h1:first-child {
+    display: none;
+  }
+
+  .prose {
+    font-size: 16px;
+    line-height: 1.7;
+  }
+
+  .prose h2 {
+    margin: 40px 0 12px;
+    color: ${({ theme: t }) => t.color.cocoa};
+    font-family: ${({ theme: t }) => t.font.serif};
+    font-size: 32px;
+    font-weight: 300;
+    line-height: 1;
+  }
+
+  .prose p,
+  .prose ul,
+  .prose ol {
+    margin-bottom: 18px;
+  }
+
+  .prose ul,
+  .prose ol {
+    padding-left: 22px;
+    list-style: revert;
+  }
+
+  .prose a {
+    color: ${({ theme: t }) => t.color.announcement};
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .crumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    color: ${({ theme: t }) => t.color.sonicSilver};
+    font-size: 12px;
+  }
+
+  .crumbs a {
+    color: ${({ theme: t }) => t.color.cocoa};
+  }
+
+  @media (max-width: 639px) {
+    .content-page {
+      padding-block: 32px 64px;
+    }
+
+    .container-narrow {
+      width: min(100% - 32px, 760px);
+    }
+
+    .content-page__title {
+      margin: 22px 0 30px;
+      font-size: 40px;
+      line-height: 0.95;
+    }
+
+    .prose {
+      font-size: 15px;
+    }
+
+    .prose h2 {
+      margin-top: 32px;
+      font-size: 28px;
+    }
+  }
+
   /* ---- Loading / empty states -------------------------------- */
 
   .spinner {

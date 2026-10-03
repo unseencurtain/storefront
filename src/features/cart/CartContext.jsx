@@ -12,23 +12,43 @@ const EMPTY_CART = {
   items_count: 0
 };
 
+/** Woo can retain a coupon in a guest session after its cart was emptied. */
+async function getCleanCart() {
+  let next = await woo.getCart();
+  if (next.items?.length || !next.coupons?.length) return next;
+
+  for (const coupon of next.coupons) {
+    try {
+      await woo.removeCoupon(coupon.code);
+    } catch {
+      /* Woo remains the authority for coupon validation. */
+    }
+  }
+
+  next = await woo.getCart();
+  return next;
+}
+
 export function CartProvider({ children }) {
   const [cart, setCart] = useState(EMPTY_CART);
   const [status, setStatus] = useState("idle"); // idle | loading | ready | error
   const [busyKeys, setBusyKeys] = useState(() => new Set());
   const [error, setError] = useState("");
   const [announcement, setAnnouncement] = useState("");
+  const couponQueue = useRef(Promise.resolve());
 
   // Guards against a slow first GET clobbering a cart the user already filled.
   const touched = useRef(false);
+  const refreshRequest = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
       try {
-        const initial = await woo.getCart();
+        const initial = await getCleanCart();
         if (cancelled) return;
+        if (touched.current) return;
         setCart(initial);
       } catch {
         if (!cancelled) setError("We couldn’t load your bag.");
@@ -56,8 +76,10 @@ export function CartProvider({ children }) {
    * every write we pull the authoritative cart back from the server.
    */
   const refresh = useCallback(async () => {
+    const requestId = ++refreshRequest.current;
     try {
-      setCart(await woo.getCart());
+      const next = await getCleanCart();
+      if (requestId === refreshRequest.current) setCart(next);
     } catch {
       /* transient — the next interaction will retry */
     }
@@ -93,11 +115,7 @@ export function CartProvider({ children }) {
         }
       } catch (err) {
         // Keep whatever the server last confirmed; surface the message instead.
-        try {
-          setCart(await woo.getCart());
-        } catch {
-          /* ignore — the banner already explains the failure */
-        }
+        await refresh();
 
         setError(err.message || "Something went wrong. Please try again.");
         return null;
@@ -105,7 +123,7 @@ export function CartProvider({ children }) {
         markBusy(key, false);
       }
     },
-    [markBusy]
+    [markBusy, refresh]
   );
 
   const addItem = useCallback(
@@ -155,26 +173,54 @@ export function CartProvider({ children }) {
 
   const applyCoupon = useCallback(
     async (code) => {
-      const result = await mutate("coupon", () => woo.applyCoupon(code));
-      if (result) {
-        setAnnouncement(`Discount code ${code} applied.`);
-        await refresh();
-      }
-      return result;
+      const normalized = code.trim();
+      if (!normalized) return null;
+
+      const operation = couponQueue.current.then(async () => {
+        const alreadyApplied = (cart.coupons ?? []).some(
+          (coupon) => coupon.code?.toLowerCase() === normalized.toLowerCase()
+        );
+        if (alreadyApplied) {
+          setError("");
+          return cart;
+        }
+
+        const result = await mutate("coupon", () => woo.applyCoupon(normalized));
+        if (result) {
+          setAnnouncement(`Discount code ${normalized} applied.`);
+        }
+        return result;
+      });
+      couponQueue.current = operation.catch(() => {});
+      return operation;
     },
-    [mutate, refresh]
+    [cart, mutate]
   );
 
   const removeCoupon = useCallback(
     async (code) => {
-      const result = await mutate(`coupon:${code}`, () => woo.removeCoupon(code));
-      if (result) {
-        setAnnouncement(`Discount code ${code} removed.`);
-        await refresh();
-      }
-      return result;
+      const normalized = code.trim();
+      if (!normalized) return null;
+
+      const operation = couponQueue.current.then(async () => {
+        const applied = (cart.coupons ?? []).some(
+          (coupon) => coupon.code?.toLowerCase() === normalized.toLowerCase()
+        );
+        if (!applied) {
+          setError("");
+          return cart;
+        }
+
+        const result = await mutate(`coupon:${normalized}`, () => woo.removeCoupon(normalized));
+        if (result) {
+          setAnnouncement(`Discount code ${normalized} removed.`);
+        }
+        return result;
+      });
+      couponQueue.current = operation.catch(() => {});
+      return operation;
     },
-    [mutate, refresh]
+    [cart, mutate]
   );
 
   const setAddress = useCallback(
