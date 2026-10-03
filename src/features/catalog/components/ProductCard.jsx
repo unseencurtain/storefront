@@ -7,7 +7,6 @@ import { Price } from "../../../shared/ui/Price.jsx";
 import {
   Badge,
   BodyXs,
-  Muted,
   NoImage,
   NoImageMark
 } from "../../../shared/ui/primitives.js";
@@ -123,11 +122,6 @@ const Title = styled.h3`
   }
 `;
 
-const Variants = styled(BodyXs)`
-  ${Muted};
-  margin-top: 4px;
-`;
-
 const CardPrice = styled(Price)`
   margin-top: 6px;
   color: ${({ theme: t }) => t.color.cocoa};
@@ -149,8 +143,6 @@ export default function ProductCard({ product, eager = false, showQuickAdd = tru
 
   const image = product.image;
   const second = product.hoverImage;
-  const swatchCount =
-    product.attributes?.reduce((sum, attribute) => sum + (attribute.terms?.length ?? 0), 0) ?? 0;
 
   const soldOut = !product.is_in_stock;
   const purchasable = product.is_purchasable && !soldOut;
@@ -178,13 +170,18 @@ export default function ProductCard({ product, eager = false, showQuickAdd = tru
             <>
               <Primary
                 src={image.src ?? image.thumbnail}
+                srcSet={image.srcset || undefined}
+                sizes={image.srcset ? image.sizes : undefined}
                 alt={image.alt || product.name}
                 loading={eager ? "eager" : "lazy"}
+                fetchPriority={eager ? "high" : undefined}
                 decoding="async"
               />
               {second ? (
                 <Secondary
                   src={second.src ?? second.thumbnail}
+                  srcSet={second.srcset || undefined}
+                  sizes={second.srcset ? second.sizes : undefined}
                   alt=""
                   loading="lazy"
                   decoding="async"
@@ -222,12 +219,6 @@ export default function ProductCard({ product, eager = false, showQuickAdd = tru
         </Title>
 
         {product.ean ? <ProductIdentifier>EAN: {product.ean}</ProductIdentifier> : null}
-
-        {swatchCount > 1 ? (
-          <Variants>
-            {swatchCount} option{swatchCount === 1 ? "" : "s"}
-          </Variants>
-        ) : null}
 
         <CardPrice product={product} />
       </Body>

@@ -323,6 +323,48 @@ export async function getProducts({
   };
 }
 
+/**
+ * Catalogue images are external supplier URLs served at full resolution (often
+ * 300 KB–1.6 MB). Grid tiles only need ~400 px, so request smaller variants
+ * where the upstream CDN supports it. Shopify's `?width=` transform is the
+ * main offender; other hosts ignore the query and keep working.
+ */
+function cdnImageUrl(url, width) {
+  if (typeof url !== "string" || !url) return url;
+  try {
+    const parsed = new URL(url);
+    if (/(^|\.)shopify\.com$/.test(parsed.hostname) || /\.cdn\.shopify\.com$/.test(parsed.hostname)) {
+      parsed.searchParams.set("width", String(width));
+      return parsed.toString();
+    }
+  } catch {
+    return url;
+  }
+  return url;
+}
+
+/** Build a card-sized image object with a srcset the grid can pick from. */
+function cardImage(image) {
+  if (!image) return null;
+  const base = image.src ?? image.thumbnail ?? null;
+  if (!base) return null;
+  const widths = [280, 400, 560];
+  const srcset = widths
+    .map((width) => {
+      const variant = cdnImageUrl(base, width);
+      return variant === base ? null : `${variant} ${width}w`;
+    })
+    .filter(Boolean)
+    .join(", ");
+  return {
+    ...image,
+    src: cdnImageUrl(base, 560),
+    thumbnail: cdnImageUrl(base, 400),
+    srcset,
+    sizes: "(max-width: 479px) 50vw, (max-width: 1023px) 33vw, 25vw"
+  };
+}
+
 function withPriceParts(product) {
   const parts = unwrapPriceHtml(product.price_html);
   const meta = product.prices ?? {};
@@ -349,8 +391,8 @@ function withPriceParts(product) {
         name: decodeEntities(term.name)
       }))
     })),
-    image: product.images?.[0] ?? null,
-    hoverImage: product.images?.[1] ?? null,
+    image: cardImage(product.images?.[0]),
+    hoverImage: cardImage(product.images?.[1]),
     priceParts: {
       regular: parts?.regular ?? null,
       sale: parts?.sale ?? null,
