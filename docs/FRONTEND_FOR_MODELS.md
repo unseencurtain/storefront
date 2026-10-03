@@ -131,6 +131,10 @@ repository. Do not assume auth changes are frontend-only.
   real variable product.
 - `Shop.jsx` and `SearchPage.jsx`: ensure category filters use the parameter
   shape expected by the Store API, usually IDs.
+- `Shop.jsx` and `styles/shop.css`: preserve the shop filter responsive behavior.
+  Brand links align with the search field on desktop, counts have a gutter from
+  the slim scrollbar, and the open mobile drawer must stack above the site
+  header through `shop--filters-open`.
 - `ProductCard.jsx`: check all callers: home, shop, search, related products.
 - `Header.jsx` and `MobileMenu.jsx`: update desktop/mobile navigation together.
 - `Footer.jsx`: newsletter UI is not a backend subscription unless explicitly
@@ -191,6 +195,15 @@ validation/display logic.
 - Variation attribute key derivation is fragile.
 - Product variation image gallery is incomplete.
 - Search category filtering may use slugs instead of IDs.
+
+Shop filter visual invariants:
+
+- Do not reintroduce left indentation on links inside `.filters__brands`.
+- Keep the desktop brand-list scrollbar slim and leave space before it for
+  counts.
+- Test the mobile filter drawer with the site header visible; the drawer must
+  cover the header rather than allowing the header to overlay its title or
+  close button.
 - Numeric product URL fallback may be passed to a slug lookup.
 - WordPress page loading is bounded and not fully paginated.
 - `dangerouslySetInnerHTML` assumes trusted sanitized server content.

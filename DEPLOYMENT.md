@@ -44,6 +44,11 @@ Host ovh    #Added by lazyssh
 6. Report the live URL and deployment result so the user can test immediately.
 7. Push to GitHub only after the user confirms the live fix works.
 
+The live shop filter update was last verified on 2026-10-03 after deployment.
+The verification covered `/shop`, a filtered shop URL, `/search`, `/cart/`, and
+`/checkout/`. The corresponding production backup was
+`/home/ubuntu/sillage/frontend/dist.backup-20261003-062555`.
+
 The live VPS is the required test environment because it contains the complete
 WordPress, WooCommerce, and supporting service setup that cannot be replicated
 on the local device.

@@ -546,6 +546,13 @@
   top: 140px;
 }
 
+/* The page fade creates a stacking context. Raise the page only while its
+   mobile filter drawer is open so the drawer can cover the sticky site header. */
+.shop--filters-open {
+  position: relative;
+  z-index: 100;
+}
+
 .shop__sort {
   position: relative;
   display: inline-flex;
@@ -651,6 +658,31 @@ button.filters__close {
 .filters__brands {
   max-height: 280px;
   overflow: auto;
+}
+
+.filters__brands .filters__link--sub {
+  padding-left: 0;
+}
+
+@media (min-width: 1024px) {
+  .filters__brands {
+    padding-right: 12px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--c-grey-400) transparent;
+  }
+
+  .filters__brands::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .filters__brands::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .filters__brands::-webkit-scrollbar-thumb {
+    background: var(--c-grey-400);
+    border-radius: 999px;
+  }
 }
 
 .brand-letters {
@@ -1551,6 +1583,20 @@ button.filters__close {
 
   button.filters__close {
     display: inline-flex;
+  }
+
+  /* Keep drawer labels and counts inside the same mobile content inset. */
+  .shop__filters .filters__link {
+    padding-left: 0;
+    padding-right: 8px;
+  }
+
+  .shop__filters .filters__link--sub {
+    padding-left: 0;
+  }
+
+  .shop__filters .filters__brands {
+    padding-right: 8px;
   }
 
   .journal__inner {

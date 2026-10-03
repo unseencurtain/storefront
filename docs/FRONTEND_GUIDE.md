@@ -321,6 +321,26 @@ the shared `Badge` component, while tags, motion, responsive layout, drawers,
 product proportions, checkout layout, and scroll-sensitive rules remain in
 legacy CSS.
 
+### Shop filter behavior
+
+The catalog filter markup is owned by `Shop.jsx` and its responsive presentation
+is owned by `styles/shop.css`:
+
+- Desktop brand links align with the brand search field; do not restore the
+  generic sub-link indentation inside `.filters__brands`.
+- Desktop brand lists keep a small right gutter between item counts and the
+  scrollbar. The scrollbar is intentionally slim and should not be replaced by
+  a full-width browser scrollbar.
+- On mobile, the filter panel is a full-height drawer. When open, the shop page
+  receives `shop--filters-open` so the drawer stacks above the sticky site
+  header. Keep the drawer header and close button within that panel.
+- Mobile filter links and brand lists retain their shared content inset and the
+  mobile drawer remains scrollable.
+
+When changing filter spacing or overflow, verify both desktop and mobile shop
+views. The filter drawer is especially sensitive to stacking-context changes
+because the shop page uses a page-fade animation.
+
 ### WordPress source
 
 - `wordpress/cereve-storefront-ean.php`: custom REST endpoints for EAN lookup,

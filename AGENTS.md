@@ -72,6 +72,7 @@ timestamped `dist.backup-*` directory. Never manually edit `dist/` or
 ## Documentation
 
 - Human guide: `docs/FRONTEND_GUIDE.md`
+- Customization and feature guide: `docs/AGENTS_CUSTOMIZATION_GUIDE.md`
 - LibreOffice guide: `docs/FRONTEND_GUIDE.odt`
 - Code review: `docs/FRONTEND_CODE_REVIEW.md`
 - Model context: `docs/FRONTEND_FOR_MODELS.md`

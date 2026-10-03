@@ -114,7 +114,7 @@ export default function Shop() {
   ].filter(Boolean);
 
   return (
-    <main className="page shop">
+    <main className={`page shop${filtersOpen ? " shop--filters-open" : ""}`}>
       <div className="container">
         <nav className="crumbs" aria-label="Breadcrumb">
           <Link to="/">Home</Link>
